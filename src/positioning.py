@@ -1,3 +1,9 @@
+import pandas as pd
+import numpy as np
+import datetime
+import os.path
+from os import path
+
 def devices(URL_DEVICES, headers):
     req = requests.get(URL_DEVICES, headers=headers)
     return req.json()['devices']
