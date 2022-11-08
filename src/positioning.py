@@ -44,9 +44,7 @@ def timeseries(workspace_id=WORKSPACE, _size=500, _from=1):
 def process_data(df_sniffer, i):
     
     df_sniffer.reset_index(inplace=True)
-    df_sniffer['timestamp'] = pd.to_datetime(df_sniffer['timestamp'], format="%Y-%m-%d %H:%M:%S").apply(lambda x: x.replace(microsecond=0))
-    subset =['timestamp', 'mac']
-    df_sniffer = df_sniffer[['timestamp','mac','rssi']].groupby(as_index=False,by=subset).median()
+    df_sniffer['timestamp'] = pd.to_datetime(df_sniffer['timestamp'])
     df_sniffer = df_sniffer.rename(columns={'rssi':'rssi_'+str(i)})
     
     return df_sniffer
@@ -71,7 +69,7 @@ def build_data(df_sniffers, devices_list):
 
     rssi_df = df_sniffer_start
     if rssi_df.empty:
-        raise Exception("Data collected by sniffers are not mergeable")
+        raise Exception("Data collected by sniffers are not mergeable: the timestamps of different sniffers do not intersect")
     
     return rssi_df
 
