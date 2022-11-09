@@ -1,3 +1,4 @@
+mapclassify
 geopandas==0.10.2
 folium==0.12.1.post1
 click==8.1.3

@@ -22,7 +22,7 @@ def devices(workspace_id=WORKSPACE):
 
 
 # list timeseries of all devices related to a workspace
-def timeseries(workspace_id=WORKSPACE, _size=500, _from=1):
+def timeseries(workspace_id=WORKSPACE, _size=5000, _from=1):
     req = requests.get(f'https://api.storage.zerynth.com/v3/timeseries/{workspace_id}/data?from={_from}&size={_size}', headers=headers)
     res = req.json()['result']
 
