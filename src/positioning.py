@@ -118,9 +118,7 @@ def pipeline():
     devices_list = devices()
     
     rssi_df = build_data(df_sniffers, devices_list)
-
     rssi_col = [col for col in rssi_df.columns if col.startswith('rssi')]
-    
     rssi_df[['x','y']] = pd.DataFrame(rssi_df[rssi_col].apply(lambda x: position(x), axis=1).tolist(), index=rssi_df.index)
     
     return rssi_df
