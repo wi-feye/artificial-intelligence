@@ -66,7 +66,7 @@ def trajectories(building_dict, rssi_df):
 
     gdf_building = geo_building(building_dict)
     map_building = gdf_building.explore(style_kwds={'color':'black','weight':3,'fillColor':'gray','fillOpacity':0.2})
-    gdf_points = gpd.GeoDataFrame(rssi_df)
+    gdf_points = geo_points(rssi_df)
     map_trajectories = gdf_points.explore(column='mac',m=map_building, cmap='tab20b', legend=False)
 
     return map_trajectories.to_json()

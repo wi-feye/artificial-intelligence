@@ -49,7 +49,7 @@ def process_data(df_sniffer, i):
     df_sniffer['timestamp'] = pd.to_datetime(df_sniffer['timestamp'], format="%Y-%m-%d %H:%M:%S").apply(lambda x: x.replace(second=0,microsecond=0))
     subset =['timestamp', 'mac']
     df_sniffer = df_sniffer[['timestamp','mac','rssi']].groupby(as_index=False,by=subset).median()
-    
+
     df_sniffer = df_sniffer.rename(columns={'rssi':'rssi_'+str(i)})
     
     return df_sniffer
@@ -117,9 +117,9 @@ def position(rss_list):
     return x, y
 
 
-def pipeline():
+def pipeline(_size=500, _from=1):
     
-    df_sniffers = timeseries()
+    df_sniffers = timeseries(_size=_size, _from=_from)
     devices_list = devices()
     
     rssi_df = build_data(df_sniffers, devices_list)
