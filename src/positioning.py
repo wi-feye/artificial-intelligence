@@ -44,7 +44,12 @@ def timeseries(workspace_id=WORKSPACE, _size=500, _from=1):
 def process_data(df_sniffer, i):
     
     df_sniffer.reset_index(inplace=True)
-    df_sniffer['timestamp'] = pd.to_datetime(df_sniffer['timestamp'])
+    df_sniffer = df_sniffer[['timestamp', 'mac', 'rssi']]
+
+    df_sniffer['timestamp'] = pd.to_datetime(df_sniffer['timestamp'], format="%Y-%m-%d %H:%M:%S").apply(lambda x: x.replace(second=0,microsecond=0))
+    subset =['timestamp', 'mac']
+    df_sniffer = df_sniffer[['timestamp','mac','rssi']].groupby(as_index=False,by=subset).median()
+    
     df_sniffer = df_sniffer.rename(columns={'rssi':'rssi_'+str(i)})
     
     return df_sniffer
@@ -134,14 +139,14 @@ if __name__ == "__main__":
     # sniffers' positions in meters ((0,0) is the point of reference)
     # WARNING!: take care of the sniffers' ordering
     global sniffers_list
-    sniffers_list = [(9.6, 0), (0, 0), (3.2, 3.4)]
+    sniffers_list = [(0, 7.8), (5.1, 1.5), (9.3, 7.8)]
 
-    # 1 meter rss
+    # 1 meter rss (zerynth device)
     global rss0
-    rss0 = -50
+    rss0 = -54
 
     # environment constant in range [2,4] 2 pochi ostacoli, 4 molti ostacoli
     global n_env
-    n_env= 3.2
+    n_env= 3.8
 
     rssi_df = pipeline()

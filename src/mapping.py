@@ -75,7 +75,7 @@ if __name__ == "__main__":
     rssi_df = pipeline()
 
     # list of vertices' positions for each room in meters ((0,0) is the point of reference)
-    building_dict = {'space':['Pacinotti'], 'geometry':[[(-1,-1),(10.6,-1),(10.6,4.4),(-1,4.4)]]}
+    building_dict = {'space':['X3', 'X2'], 'geometry':[[(-1,-0.5),(5,-0.5),(5,8.3),(-1,8.3)],[(5,-0.5),(9.8,-0.5),(9.8,8.3),(5,8.3)]]}
 
     map_json = map(building_dict, rssi_df)
     heatmap_json = heatmap(building_dict, rssi_df)
