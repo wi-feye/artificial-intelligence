@@ -8,4 +8,8 @@ class Parameter:
         self.rss0 = -54
 
         # environment constant in range [2,4] 2 pochi ostacoli, 4 molti ostacoli
-        self.n_env= 3.8
+        self.n_env= 3.6
+
+        self.size = 500
+
+        self.start = 1

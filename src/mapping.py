@@ -1,6 +1,5 @@
 import geopandas as gpd
-from shapely.geometry import Point, LineString, Polygon, MultiPoint
-import folium
+from shapely.geometry import Polygon
 from positioning import *
 from parameters import Parameter
 from building import Building

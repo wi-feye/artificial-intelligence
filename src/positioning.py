@@ -1,7 +1,5 @@
 import pandas as pd
 import numpy as np
-import datetime
-from os import path
 import requests
 from parameters import Parameter
 
@@ -125,9 +123,11 @@ def position(rss_list):
     return x, y
 
 
-def pipeline(_size=500, _from=1):
+def pipeline():
 
-    df_sniffers = timeseries(_size=_size, _from=_from)
+    par = Parameter()
+
+    df_sniffers = timeseries(_size=par.size, _from=par.start)
     devices_list = devices()
     
     rssi_df = build_data(df_sniffers, devices_list)
