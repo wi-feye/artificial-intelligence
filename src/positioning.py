@@ -3,27 +3,33 @@ import numpy as np
 import datetime
 from os import path
 import requests
+from parameters import Parameter
 
 # Costants
 WORKSPACE_ATZENI_SNIFFERS = 'wks-6sdnjgqfpv98'
 WORKSPACE_NOSTRI_SNIFFERS = 'wks-7e2yv6y5ijmc'
 WORKSPACE = WORKSPACE_NOSTRI_SNIFFERS # selection of workspace to use by default
+HEADERS = {
+        'X-API-KEY': 'G9froN8D4R.cF1znVzGvCejjc5BrzCsSqcqMaANPgRmFXMglCAWhkYttQFTymThnrf1ta7OQVP4'
+    }
 
 # list zerynth workspaces (default: atzeni workspace, Smart Application project: our workspace)
 def workspaces():
-    req = requests.get(f'https://api.zdm.zerynth.com/v3/workspaces', headers=headers)
+    req = requests.get(f'https://api.zdm.zerynth.com/v3/workspaces', headers=HEADERS)
     return req.json()['workspaces']
 
 
 # list of devices of selected workspace
 def devices(workspace_id=WORKSPACE):
-    req = requests.get(f'https://api.zdm.zerynth.com/v3/workspaces/{workspace_id}/devices', headers=headers)
+
+    req = requests.get(f'https://api.zdm.zerynth.com/v3/workspaces/{workspace_id}/devices', headers=HEADERS)
     return req.json()['devices']
 
 
 # list timeseries of all devices related to a workspace
 def timeseries(workspace_id=WORKSPACE, _size=500, _from=1):
-    req = requests.get(f'https://api.storage.zerynth.com/v3/timeseries/{workspace_id}/data?from={_from}&size={_size}', headers=headers)
+
+    req = requests.get(f'https://api.storage.zerynth.com/v3/timeseries/{workspace_id}/data?from={_from}&size={_size}', headers=HEADERS)
     res = req.json()['result']
 
     data = {
@@ -38,6 +44,7 @@ def timeseries(workspace_id=WORKSPACE, _size=500, _from=1):
             data['timestamp'].append(fp['timestamp_device'])
             data['mac'].append(scan[3])
             data['rssi'].append(scan[4])
+
     return pd.DataFrame.from_dict(data)
 
 
@@ -56,7 +63,7 @@ def process_data(df_sniffer, i):
 
 
 def build_data(df_sniffers, devices_list):
-    
+
     not_empty_sniffers = []
     for i in range(len(devices_list)):
         df_sniffer = df_sniffers[df_sniffers['device_id'] == devices_list[i]['id']]
@@ -81,18 +88,20 @@ def build_data(df_sniffers, devices_list):
 
 def position(rss_list):
 
+    par = Parameter()
+
     if len(rss_list) >= 3:
-        P = np.array(sniffers_list)
+        P = np.array(par.sniffers_list)
         temp_A = P[-1] - P
         temp_A = temp_A[0:-1] 
         A = 2 * temp_A
 
         # from rssi to distance in meters
-        rss_to_dist = lambda rss, n_env: np.power(10, (rss0 -rss) / (10 * n_env)) 
+        rss_to_dist = lambda rss, n_env: np.power(10, (par.rss0 -rss) / (10 * n_env)) 
 
         d = np.empty((0,1))
         for rss in rss_list:
-            d = np.append(d, [[rss_to_dist(rss, n_env)]], axis=0)
+            d = np.append(d, [[rss_to_dist(rss, par.n_env)]], axis=0)
 
         d_2 = np.power(d,2)
         temp_d = d_2 - d_2[-1]
@@ -110,15 +119,14 @@ def position(rss_list):
         y = X[1][0]
     else:
         sniffer_index_max = np.argmax(rss_list)
-        x = sniffers_list[sniffer_index_max][0]
-        y = sniffers_list[sniffer_index_max][1]
-
+        x = par.sniffers_list[sniffer_index_max][0]
+        y = par.sniffers_list[sniffer_index_max][1]
 
     return x, y
 
 
 def pipeline(_size=500, _from=1):
-    
+
     df_sniffers = timeseries(_size=_size, _from=_from)
     devices_list = devices()
     
@@ -128,25 +136,7 @@ def pipeline(_size=500, _from=1):
     
     return rssi_df
 
-
+    
 if __name__ == "__main__":
-
-    global headers
-    headers = {
-        'X-API-KEY': 'G9froN8D4R.cF1znVzGvCejjc5BrzCsSqcqMaANPgRmFXMglCAWhkYttQFTymThnrf1ta7OQVP4'
-    }
-
-    # sniffers' positions in meters ((0,0) is the point of reference)
-    # WARNING!: take care of the sniffers' ordering
-    global sniffers_list
-    sniffers_list = [(0, 7.8), (5.1, 1.5), (9.3, 7.8)]
-
-    # 1 meter rss (zerynth device)
-    global rss0
-    rss0 = -54
-
-    # environment constant in range [2,4] 2 pochi ostacoli, 4 molti ostacoli
-    global n_env
-    n_env= 3.8
 
     rssi_df = pipeline()
