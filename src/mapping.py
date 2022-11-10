@@ -8,9 +8,9 @@ from folium.plugins import HeatMap
 
 def geo_building():
 
-    building_dict = Building()
+    building = Building()
 
-    gdf_building = gpd.GeoDataFrame(building_dict)
+    gdf_building = gpd.GeoDataFrame(building.dictionary)
     gdf_building['geometry'] = gdf_building['geometry'].apply(lambda x : Polygon(x))
 
     return gdf_building
@@ -36,13 +36,6 @@ def geo_points(rssi_df):
     gdf_points['timestamp'] = gdf_points['timestamp'].astype(str)
 
     return gdf_points
-
-def spatial_join(rssi_df):
-
-    gdf_building = geo_building()
-    gdf_points = geo_points(rssi_df)
-
-    return gpd.sjoin(gdf_points, gdf_building)
 
 
 def map(rssi_df):
@@ -81,3 +74,4 @@ if __name__ == "__main__":
     map_json = map(rssi_df)
     heatmap_json = heatmap(rssi_df)
     trajectories_json = trajectories(rssi_df)
+    
