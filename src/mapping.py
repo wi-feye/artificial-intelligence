@@ -47,8 +47,7 @@ def map(rssi_df):
     map_sniffers = gdf_sniffers.explore(m=map_building, color='red')
     map_points = gdf_points.explore(m=map_sniffers)
 
-    return map_points
-    # return map_points.to_json()
+    return map_points.to_json()
 
 def heatmap(rssi_df):
 
