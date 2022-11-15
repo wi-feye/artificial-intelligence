@@ -136,4 +136,3 @@ def pipeline():
 if __name__ == "__main__":
 
     rssi_df = pipeline()
-    print(rssi_df)
