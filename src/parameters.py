@@ -1,3 +1,11 @@
+# Costants
+WORKSPACE_ATZENI_SNIFFERS = 'wks-6sdnjgqfpv98'
+WORKSPACE_NOSTRI_SNIFFERS = 'wks-7e2yv6y5ijmc'
+WORKSPACE = WORKSPACE_NOSTRI_SNIFFERS # selection of workspace to use by default
+HEADERS = {
+        'X-API-KEY': 'G9froN8D4R.cF1znVzGvCejjc5BrzCsSqcqMaANPgRmFXMglCAWhkYttQFTymThnrf1ta7OQVP4'
+    }
+
 class Parameter:
     def __init__(self):
         # sniffers' positions in meters ((0,0) is the point of reference)
@@ -10,6 +18,6 @@ class Parameter:
         # environment constant in range [2,4] 2 pochi ostacoli, 4 molti ostacoli
         self.n_env= 3.6
 
-        self.size = 500
+        self.size = 5000
 
         self.start = 1
