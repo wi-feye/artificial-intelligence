@@ -15,9 +15,9 @@ class Parameter:
         # 1 meter rss (zerynth device)
         self.rss0 = -54
 
-        # environment constant in range [2,4] 2 pochi ostacoli, 4 molti ostacoli
-        self.n_env= 3.6
+        # environment constant in range [2,4] 2 pochi ostacoli (aumenta sparsità), 4 molti ostacoli (diminuisce sparsità)
+        self.n_env = 3.333
 
-        self.size = 5000
+        self.size = 1000
 
         self.start = 1

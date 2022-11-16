@@ -67,6 +67,7 @@ def generate_time_every(df, freq="1min", times=100, when=None):
     Return:
         list: a list of dataframe splitted into chunks w.r.t. freq
     """
+def generate_time_every(df, freq="2H", times=5, when=None):
     if when == None:
         when = (datetime.datetime.now() - datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
     
