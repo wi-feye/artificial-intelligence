@@ -45,7 +45,7 @@ def activeness_index(df, start=None, stop=None):
     times: how many times generate the time
     when: if not defined it will generate time from 1H before
     """
-def generate_time_every(df, freq="1min", times=100, when=None):
+def generate_time_every(df, freq="2H", times=5, when=None):
     if when == None:
         when = (datetime.datetime.now() - datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
     

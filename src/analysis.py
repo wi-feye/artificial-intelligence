@@ -1,5 +1,6 @@
 from positioning import *
 from mapping import *
+from utils import *
 
 def enrich_points(rssi_df):
 
@@ -15,20 +16,32 @@ def enrich_spaces(rssi_df):
     gdf_points_enriched = enrich_points(rssi_df)
 
     gdf_building = geo_building()
-    print(gdf_building)
     gdf_building = gdf_building.set_index('space').join(gdf_points_enriched['space'].value_counts())
     gdf_building.fillna(0, inplace=True)
-    print(gdf_building)
     gdf_building.rename(columns={"space": "count"}, inplace=True)
-    print(gdf_building)
     gdf_building.reset_index(inplace=True)
-    print(gdf_building)
 
     gdf_building['count_pct'] = gdf_building['count'] / gdf_building['count'].sum()
     gdf_building['area'] = gdf_building['geometry'].area
     gdf_building['density'] = gdf_building['count'] / gdf_building['area']
 
     return gdf_building
+
+
+def apply_enrich_tt(rssi_df, enrichf, freq="2H", times=5, when=None):
+
+    if when == None:
+        when = rssi_df['timestamp'].min()
+
+    rssi_df_list = generate_time_every(rssi_df, freq, times, when)
+
+    gdf_list = []
+    for rssi_df in rssi_df_list:
+        if not rssi_df.empty:
+            gdf_list.append(enrichf(rssi_df))
+
+    return gdf_list
+
 
 if __name__ == "__main__":
     rssi_df = pipeline()

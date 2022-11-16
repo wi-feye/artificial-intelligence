@@ -5,6 +5,7 @@ from parameters import Parameter
 from building import Building
 from folium.plugins import HeatMap
 import folium
+from utils import *
 
 def geo_building():
 
@@ -75,6 +76,8 @@ def heatmap_tt(rssi_df):
     hm = folium.plugins.HeatMapWithTime(heat_data, auto_play=True, max_opacity=0.8)
     hm.add_to(map_sniffers)
 
+    #map_sniffers.save('/home/profeta/Scrivania/map.html')
+
     return map_sniffers.to_json()
 
 def trajectories(rssi_df):
@@ -84,7 +87,23 @@ def trajectories(rssi_df):
     gdf_points = geo_points(rssi_df)
     map_trajectories = gdf_points.explore(column='mac',m=map_building, cmap='tab20b', legend=False)
 
+    #map_trajectories.save('/home/profeta/Scrivania/traj.html')
+
     return map_trajectories.to_json()
+
+def apply_map_tt(rssi_df, mapf, freq="2H", times=5, when=None):
+
+    if when == None:
+        when = rssi_df['timestamp'].min()
+
+    rssi_df_list = generate_time_every(rssi_df, freq, times, when)
+
+    map_list = []
+    for rssi_df in rssi_df_list:
+        if not rssi_df.empty:
+            map_list.append(mapf(rssi_df))
+
+    return map_list
 
 if __name__ == "__main__":
 
