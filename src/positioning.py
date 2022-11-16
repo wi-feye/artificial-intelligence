@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import requests
+#import hashlib
 from parameters import *
 
 # list zerynth workspaces (default: atzeni workspace, Smart Application project: our workspace)
@@ -41,15 +42,19 @@ def timeseries(workspace_id=WORKSPACE, _size=500, _from=1):
 def process_data(df_sniffer, i):
     
     df_sniffer.reset_index(inplace=True)
-
     df_sniffer = df_sniffer[['timestamp', 'mac', 'rssi']]
-    regex = '(?:[0-9a-fA-F]:?){12}'
-    df_sniffer = df_sniffer[df_sniffer['mac'].str.match(regex)]
+    
+    #regex = '(?:[0-9a-fA-F]:?){12}'
+    #df_sniffer = df_sniffer[df_sniffer['mac'].str.match(regex)]
+
+    #df_sniffer['mac'] = df_sniffer['mac'].astype(str) 
+    #df_sniffer['mac'] = df_sniffer['mac'].apply(lambda x: hashlib.md5(x.encode()).hexdigest())
+
 
     df_sniffer['timestamp'] = pd.to_datetime(df_sniffer['timestamp'], format="%Y-%m-%d %H:%M:%S").apply(lambda x: x.replace(second=0,microsecond=0))
     subset =['timestamp', 'mac']
 
-    df_sniffer = df_sniffer[['timestamp','mac','rssi']].groupby(as_index=False,by=subset).median()
+    df_sniffer = df_sniffer[['timestamp','mac','rssi']].groupby(as_index=False,by=subset).min()
 
     df_sniffer = df_sniffer.rename(columns={'rssi':'rssi_'+str(i)})
     
@@ -136,3 +141,4 @@ def pipeline():
 if __name__ == "__main__":
 
     rssi_df = pipeline()
+    print(rssi_df)
