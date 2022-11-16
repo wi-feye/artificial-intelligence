@@ -1,3 +1,4 @@
+from typing import Tuple
 import pandas as pd
 import numpy as np
 import requests
@@ -18,7 +19,20 @@ def devices(workspace_id=WORKSPACE):
 
 
 # list timeseries of all devices related to a workspace
-def timeseries(_start:datetime, _end:datetime.datetime = None, workspace_id=WORKSPACE, _size=500, _from=1):
+def timeseries(_start:datetime.datetime, _end:datetime.datetime = None, workspace_id=WORKSPACE, _size=500, _from=1) -> pd.DataFrame:
+    """Return dataframe of probe request gathered by Zerynth
+
+    Args:
+        _start (datetime.datetime): datetime (timestamp) from which to start 
+        _end (datetime.datetime, optional): last datetime (timestamp) for wich take probe request. Defaults to None.
+        workspace_id (_type_, optional): workspace. Defaults to WORKSPACE.
+        _size (int, optional): number of probe request to take. Defaults to 500.
+        _from (int, optional): record from wich to start to take probe request. Defaults to 1.
+
+    Returns:
+        pd.DataFrame: dataframe with probe request
+    """
+
     _start = _start.isoformat()+"Z"
     if(_end is None):
         req = requests.get(f'https://api.storage.zerynth.com/v3/timeseries/{workspace_id}/data?from={_from}&size={_size}&start={_start}', headers=HEADERS)
@@ -43,17 +57,19 @@ def timeseries(_start:datetime, _end:datetime.datetime = None, workspace_id=WORK
     return pd.DataFrame.from_dict(data)
 
 
-def process_data(df_sniffer, i):
+def process_data(df_sniffer: pd.DataFrame, i: int) -> pd.DataFrame:
+    """Pre-process data for each sniffer 
+
+    Args:
+        df_sniffer (pd.DataFrame): dataframe of records of a particular sniffer
+        i (int): index of sniffer
+
+    Returns:
+        pd.DataFrame: dataframe of the sniffer processed 
+    """
     
     df_sniffer.reset_index(inplace=True)
     df_sniffer = df_sniffer[['timestamp', 'mac', 'rssi']]
-    
-    #regex = '(?:[0-9a-fA-F]:?){12}'
-    #df_sniffer = df_sniffer[df_sniffer['mac'].str.match(regex)]
-
-    #df_sniffer['mac'] = df_sniffer['mac'].astype(str) 
-    #df_sniffer['mac'] = df_sniffer['mac'].apply(lambda x: hashlib.md5(x.encode()).hexdigest())
-
 
     df_sniffer['timestamp'] = pd.to_datetime(df_sniffer['timestamp'], format="%Y-%m-%d %H:%M:%S").apply(lambda x: x.replace(second=0,microsecond=0))
     subset =['timestamp', 'mac']
@@ -65,7 +81,20 @@ def process_data(df_sniffer, i):
     return df_sniffer
 
 
-def build_data(df_sniffers, devices_list):
+def build_data(df_sniffers: pd.DataFrame, devices_list: list) -> pd.DataFrame: 
+    """Take data colected by all the sniffer, create a dataframe for each sniffer, pre-process them and merge them
+    in a single dataframe with all rssi signals for each probe request
+
+    Args:
+        df_sniffers (pd.DataFrame): dataframe of data collected by sniffers
+        devices_list (list): list of sniffer devices
+
+    Raises:
+        Exception: the timestamps of different sniffers do not intersect
+
+    Returns:
+        pd.DataFrame: dataframe with all rssi signals for each probe request
+    """
 
     not_empty_sniffers = []
     for i in range(len(devices_list)):
@@ -89,7 +118,15 @@ def build_data(df_sniffers, devices_list):
     return rssi_df
 
 
-def position(rss_list):
+def position(rss_list: list) -> Tuple[float, float]:
+    """Compute the position (x, y) of a device given the rssi signals, one from each sniffer
+
+    Args:
+        rss_list (list): list of rssi signals, one from each sniffer
+
+    Returns:
+        Tuple[float, float]: position (x,y) of the device
+    """
 
     par = Parameter()
 
@@ -128,7 +165,13 @@ def position(rss_list):
     return x, y
 
 
-def pipeline():
+def pipeline() -> pd.DataFrame:
+    """Function that take data from Zerynth, split for each sniffer, pre-process them and merge to compute
+    the dataframe with rssi signals and the position (x,y) for each probe request
+
+    Returns:
+        pd.DataFrame: dataframe with all rssi signals for each probe request and the coordinates x and y
+    """
 
     par = Parameter()
 

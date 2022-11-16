@@ -45,7 +45,7 @@ def activeness_index(df, start=None, stop=None):
     print(len(interested_df.index))
     
 
-def generate_time_every(df, freq="1min", times=100, when=None):
+def generate_time_every(df, freq="2H", times=5, when=None):
     """
     generate dataframes every freq for "times" times starting from "when"
     
@@ -67,7 +67,6 @@ def generate_time_every(df, freq="1min", times=100, when=None):
     Return:
         list: a list of dataframe splitted into chunks w.r.t. freq
     """
-def generate_time_every(df, freq="2H", times=5, when=None):
     if when == None:
         when = (datetime.datetime.now() - datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
     

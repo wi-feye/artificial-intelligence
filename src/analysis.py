@@ -2,7 +2,17 @@ from positioning import *
 from mapping import *
 from utils import *
 
-def enrich_points(rssi_df):
+def enrich_points(rssi_df: pd.DataFrame) -> gpd.GeoDataFrame:
+    """Compute an enriched geodataframe of probe request. For each record (probe request) there is a new feature space
+    that is the area where the point is within, and all the features of the relative space.
+    See https://geopandas.org/en/stable/docs/reference/api/geopandas.sjoin.html to more info. 
+
+    Args:
+        rssi_df (pd.DataFrame): dataframe with rssi signals and the position (x,y) for each probe request
+
+    Returns:
+        gpd.GeoDataFrame: geodataframe of probe request enriched
+    """
 
     gdf_building = geo_building()
     gdf_points = geo_points(rssi_df)
@@ -11,7 +21,16 @@ def enrich_points(rssi_df):
     
     return gdf_points
 
-def enrich_spaces(rssi_df):
+def enrich_spaces(rssi_df: pd.DataFrame) -> gpd.GeoDataFrame:
+    """Compute an enriched geodataframe of the building. For each space (area or room) there are new features as
+    #MAC, %MAC, area and density.
+
+    Args:
+        rssi_df (pd.DataFrame): dataframe with rssi signals and the position (x,y) for each probe request
+
+    Returns:
+        gpd.GeoDataFrame: geodataframe of building enriched
+    """
 
     gdf_points_enriched = enrich_points(rssi_df)
 
@@ -28,7 +47,19 @@ def enrich_spaces(rssi_df):
     return gdf_building
 
 
-def apply_enrich_tt(rssi_df, enrichf, freq="2H", times=5, when=None):
+def apply_enrich_tt(rssi_df: pd.DataFrame, enrichf: function, freq="2H", times=5, when:datetime=None) -> List[gpd.GeoDataFrame]:
+    """_summary_
+
+    Args:
+        rssi_df (pd.DataFrame): dataframe with rssi signals and the position (x,y) for each probe request
+        enrichf (function): enrich_points or enrich_spaces
+        freq (str, optional): delta time. Defaults to "2H".
+        times (int, optional): number of ranges. Defaults to 5.
+        when (datetime.datetime, optional): starting datetime. Defaults to None.
+
+    Returns:
+        List[gpd.GeoDataFrame]: list of geodataframe, one for each range of time
+    """
 
     if when == None:
         when = rssi_df['timestamp'].min()

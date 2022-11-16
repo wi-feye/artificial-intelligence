@@ -1,13 +1,23 @@
-import geopandas as gpd
-from shapely.geometry import Polygon
-from positioning import *
-from parameters import Parameter
-from building import Building
-from folium.plugins import HeatMap
+#import json
+from typing import List
+
 import folium
+import geopandas as gpd
+from folium.plugins import HeatMap
+from shapely.geometry import Polygon
+
+from building import Building
+from parameters import Parameter
+from positioning import *
 from utils import *
 
-def geo_building():
+
+def geo_building() -> gpd.GeoDataFrame:
+    """Construct the geodataframe for the building
+
+    Returns:
+        gpd.GeoDataFrame: geodataframe for the building. Each record is a space (area or room) with a 'geometry' feature (polygon)
+    """
 
     building = Building()
 
@@ -16,7 +26,12 @@ def geo_building():
 
     return gdf_building
 
-def geo_sniffers():
+def geo_sniffers() -> gpd.GeoDataFrame:
+    """Construct the geodataframe for the building
+
+    Returns:
+        gpd.GeoDataFrame: geodataframe for the sniffers. Each record is a sniffer with a 'geometry' feature (point)
+    """
 
     par = Parameter()
 
@@ -30,7 +45,15 @@ def geo_sniffers():
 
     return gdf_sniffers
 
-def geo_points(rssi_df):
+def geo_points(rssi_df: pd.DataFrame) -> gpd.GeoDataFrame:
+    """Create the geodataframe with a column 'geometry'
+
+    Args:
+        rssi_df (pd.DataFrame): dataframe with rssi signals and the position (x,y) for each probe request
+
+    Returns:
+        gpd.GeoDataFrame: geodataframe for the user devices. Each record is a MAC with a 'geometry' feature (point)
+    """
 
     gdf_points = gpd.GeoDataFrame(rssi_df)
     gdf_points['geometry'] = gpd.points_from_xy(gdf_points['x'], gdf_points['y'])
@@ -39,7 +62,15 @@ def geo_points(rssi_df):
     return gdf_points
 
 
-def map(rssi_df):
+def map(rssi_df: pd.DataFrame):
+    """Create the map in json format
+
+    Args:
+        rssi_df (pd.DataFrame): dataframe with rssi signals and the position (x,y) for each probe request
+
+    Returns:
+        json: map with building, sniffers and points representing MAC
+    """
 
     gdf_building = geo_building()
     gdf_sniffers = geo_sniffers()
@@ -51,7 +82,15 @@ def map(rssi_df):
 
     return map_points.to_json()
 
-def heatmap(rssi_df):
+def heatmap(rssi_df: pd.DataFrame):
+    """Create the heatmap in json format
+
+    Args:
+        rssi_df (pd.DataFrame): dataframe with rssi signals and the position (x,y) for each probe request
+
+    Returns:
+        json: static heatmap of MACs with building
+    """
 
     gdf_building = geo_building()
     map_heat = gdf_building.explore(style_kwds={'color':'black','weight':3,'fillColor':'gray','fillOpacity':0.2})
@@ -59,7 +98,16 @@ def heatmap(rssi_df):
 
     return map_heat.to_json()
 
-def heatmap_tt(rssi_df):
+def heatmap_tt(rssi_df: pd.DataFrame):
+    """Create the dynamic heatmap in json format
+
+    Args:
+        rssi_df (pd.DataFrame): dataframe with rssi signals and the position (x,y) for each probe request
+
+    Returns:
+        json: dynamic heatmap of points with building
+    """
+    
     gdf_building = geo_building()
     gdf_sniffers = geo_sniffers()
 
@@ -80,7 +128,15 @@ def heatmap_tt(rssi_df):
 
     return map_sniffers.to_json()
 
-def trajectories(rssi_df):
+def trajectories(rssi_df: pd.DataFrame):
+    """Create the trajectories' map in json format
+
+    Args:
+        rssi_df (pd.DataFrame): dataframe with rssi signals and the position (x,y) for each probe request
+
+    Returns:
+        json: map of trajectory. Points with same color have same MAC
+    """
 
     gdf_building = geo_building()
     map_building = gdf_building.explore(style_kwds={'color':'black','weight':3,'fillColor':'gray','fillOpacity':0.2})
@@ -91,7 +147,19 @@ def trajectories(rssi_df):
 
     return map_trajectories.to_json()
 
-def apply_map_tt(rssi_df, mapf, freq="2H", times=5, when=None):
+def apply_map_tt(rssi_df: pd.DataFrame, mapf: function, freq="2H", times=5, when: datetime.datetime = None):
+    """_summary_
+
+    Args:
+        rssi_df (pd.DataFrame): dataframe with rssi signals and the position (x,y) for each probe request
+        mapf (function): e.g. map, heatmap etc.
+        freq (str, optional): delta time. Defaults to "2H".
+        times (int, optional): number of ranges. Defaults to 5.
+        when (datetime.datetime, optional): starting datetime. Defaults to None.
+
+    Returns:
+        List[json]: list of json map, one for each range of time
+    """
 
     if when == None:
         when = rssi_df['timestamp'].min()
