@@ -5,6 +5,7 @@
 # @app.route("/")
 # def hello_world():
 #     return "<p>Hello, World!</p>"
+import datetime
 from positioning import *
 from mapping import *
 from utils import *
@@ -13,7 +14,8 @@ from parameters import *
 if __name__ == "__main__":
     par = Parameter()
 
-    df_sniffers = timeseries(_size=par.size, _from=par.start)
+    start = datetime.datetime(2022, 11, 9)
+    df_sniffers = timeseries(_start = start,_size=par.size, _from=par.start)
     devices_list = devices()
     
     rssi_df = build_data(df_sniffers, devices_list)
@@ -22,5 +24,3 @@ if __name__ == "__main__":
     print(rssi_df)
     print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
     print(df_sniffers)
-
-    

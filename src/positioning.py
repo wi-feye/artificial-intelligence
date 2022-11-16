@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import requests
+import datetime
 from parameters import *
 
 # list zerynth workspaces (default: atzeni workspace, Smart Application project: our workspace)
@@ -17,9 +18,13 @@ def devices(workspace_id=WORKSPACE):
 
 
 # list timeseries of all devices related to a workspace
-def timeseries(workspace_id=WORKSPACE, _size=500, _from=1):
-
-    req = requests.get(f'https://api.storage.zerynth.com/v3/timeseries/{workspace_id}/data?from={_from}&size={_size}', headers=HEADERS)
+def timeseries(_start:datetime, _end:datetime.datetime = None, workspace_id=WORKSPACE, _size=500, _from=1):
+    _start = _start.isoformat()+"Z"
+    if(_end is None):
+        req = requests.get(f'https://api.storage.zerynth.com/v3/timeseries/{workspace_id}/data?from={_from}&size={_size}&start={_start}', headers=HEADERS)
+    else:
+        _end = _end.isoformat()+"Z"
+        req = requests.get(f'https://api.storage.zerynth.com/v3/timeseries/{workspace_id}/data?from={_from}&size={_size}&start={_start}&end={_end}', headers=HEADERS)
     res = req.json()['result']
 
     data = {
@@ -129,6 +134,6 @@ def pipeline():
     return rssi_df
 
     
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    rssi_df = pipeline()
+#     rssi_df = pipeline()
