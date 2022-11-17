@@ -147,12 +147,12 @@ def trajectories(rssi_df: pd.DataFrame):
 
     return map_trajectories.to_json()
 
-def apply_map_tt(rssi_df: pd.DataFrame, mapf: function, freq="2H", times=5, when: datetime.datetime = None):
+def apply_map_tt(rssi_df: pd.DataFrame, mapf, freq="2H", times=5, when: datetime.datetime = None):
     """_summary_
 
     Args:
         rssi_df (pd.DataFrame): dataframe with rssi signals and the position (x,y) for each probe request
-        mapf (function): e.g. map, heatmap etc.
+        mapf (function (pd.DataFrame) -> json): e.g. map, heatmap etc.
         freq (str, optional): delta time. Defaults to "2H".
         times (int, optional): number of ranges. Defaults to 5.
         when (datetime.datetime, optional): starting datetime. Defaults to None.
@@ -172,13 +172,3 @@ def apply_map_tt(rssi_df: pd.DataFrame, mapf: function, freq="2H", times=5, when
             map_list.append(mapf(rssi_df))
 
     return map_list
-
-if __name__ == "__main__":
-
-    rssi_df = pipeline()
-
-    map_json = map(rssi_df)
-    heatmap_json = heatmap(rssi_df)
-    heatmap_through_time_json = heatmap_tt(rssi_df)
-    trajectories_json = trajectories(rssi_df)
-    

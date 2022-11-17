@@ -174,8 +174,8 @@ def pipeline() -> pd.DataFrame:
     """
 
     par = Parameter()
-
-    df_sniffers = timeseries(_size=par.size, _from=par.start)
+    
+    df_sniffers = timeseries(_start= par.start_time, _size=par.size, _from=par.start)
     devices_list = devices()
     
     rssi_df = build_data(df_sniffers, devices_list)
@@ -183,8 +183,3 @@ def pipeline() -> pd.DataFrame:
     rssi_df[['x','y']] = pd.DataFrame(rssi_df[rssi_col].apply(lambda x: position(x), axis=1).tolist(), index=rssi_df.index)
     
     return rssi_df
-
-    
-# if __name__ == "__main__":
-
-#     rssi_df = pipeline()

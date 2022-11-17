@@ -5,22 +5,24 @@
 # @app.route("/")
 # def hello_world():
 #     return "<p>Hello, World!</p>"
-import datetime
 from positioning import *
 from mapping import *
+from analysis import *
 from utils import *
 from parameters import *
 
 if __name__ == "__main__":
-    par = Parameter()
-
-    start = datetime.datetime(2022, 11, 9)
-    df_sniffers = timeseries(_start = start,_size=par.size, _from=par.start)
-    devices_list = devices()
     
-    rssi_df = build_data(df_sniffers, devices_list)
-    rssi_col = [col for col in rssi_df.columns if col.startswith('rssi')]
-    rssi_df[['x','y']] = pd.DataFrame(rssi_df[rssi_col].apply(lambda x: position(x), axis=1).tolist(), index=rssi_df.index)
+    # Positioning
+    rssi_df = pipeline()
     print(rssi_df)
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-    print(df_sniffers)
+    
+    # Mapping
+    map_json = map(rssi_df)
+    heatmap_json = heatmap(rssi_df)
+    heatmap_through_time_json = heatmap_tt(rssi_df)
+    trajectories_json = trajectories(rssi_df)
+    
+    # Analysis
+    gdf_points_final = enrich_points(rssi_df)
+    gdf_building_final = enrich_spaces(rssi_df)

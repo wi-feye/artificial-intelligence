@@ -47,12 +47,12 @@ def enrich_spaces(rssi_df: pd.DataFrame) -> gpd.GeoDataFrame:
     return gdf_building
 
 
-def apply_enrich_tt(rssi_df: pd.DataFrame, enrichf: function, freq="2H", times=5, when:datetime=None) -> List[gpd.GeoDataFrame]:
+def apply_enrich_tt(rssi_df: pd.DataFrame, enrichf, freq="2H", times=5, when:datetime=None) -> List[gpd.GeoDataFrame]:
     """_summary_
 
     Args:
         rssi_df (pd.DataFrame): dataframe with rssi signals and the position (x,y) for each probe request
-        enrichf (function): enrich_points or enrich_spaces
+        enrichf (function (pd.DataFrame) -> gpd.GeoDataFrame): enrich_points or enrich_spaces
         freq (str, optional): delta time. Defaults to "2H".
         times (int, optional): number of ranges. Defaults to 5.
         when (datetime.datetime, optional): starting datetime. Defaults to None.
@@ -72,10 +72,3 @@ def apply_enrich_tt(rssi_df: pd.DataFrame, enrichf: function, freq="2H", times=5
             gdf_list.append(enrichf(rssi_df))
 
     return gdf_list
-
-
-if __name__ == "__main__":
-    rssi_df = pipeline()
-
-    gdf_points_final = enrich_points(rssi_df)
-    gdf_building_final = enrich_spaces(rssi_df)
