@@ -1,4 +1,6 @@
 FROM python:3.8
+#FROM continuumio/conda-ci-linux-64-python3.8
+#FROM continuumio/miniconda3:4.8.2
 FROM conda/miniconda3:latest
 LABEL maintainer="Wi-Feye"
 LABEL version="1.0"
