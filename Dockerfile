@@ -1,7 +1,5 @@
 FROM python:3.8
-#FROM continuumio/conda-ci-linux-64-python3.8
-#FROM continuumio/miniconda3:4.8.2
-FROM conda/miniconda3:latest
+#FROM conda/miniconda3:latest
 LABEL maintainer="Wi-Feye"
 LABEL version="1.0"
 LABEL description="Wi-Feye Artificial Intelligence"
@@ -12,8 +10,10 @@ COPY . /app
 # setting the workdir
 WORKDIR /app
 
+RUN ["apt", "update"]
+RUN ["apt-get", "install" ,"-y", "libgdal-dev"]
+
 # installing all requirements
-RUN ["conda", "install", "geopandas"]
 RUN ["pip3", "install", "-r", "requirements.txt"]
 
 # exposing the port
