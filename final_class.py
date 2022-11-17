@@ -121,3 +121,8 @@ class Positioning:
             y = self.__sniffers_list[sniffer_index_max][1]
 
         return x, y
+    
+    
+# source1 , source2 and 3 are json from backend requeste!!!!
+p = Positioning(measurements, devices, areas)
+p.perform_xy()
