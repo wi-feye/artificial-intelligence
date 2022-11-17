@@ -2,10 +2,10 @@ version: "3.6"
 
 services:
 
-  artificial-intelligence:
+  ai_ms_worker:
     # Building the image
-    <<: &artificial-intelligence
-      image: "artifical-intelligence:latest"
+    <<: &ai_ms_worker
+      image: "ai_ms_worker:latest"
       build:
         context: .
         dockerfile: Dockerfile
