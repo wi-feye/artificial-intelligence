@@ -2,9 +2,12 @@ import json
 import pandas as pd
 from pandas import DataFrame
 import numpy as np
+from geopandas import GeoDataFrame
+from shapely.geometry import Polygon
+import geopandas as gpd
 
 class Positioning:
-    def __init__(self, measurements: str, devices: str, areas: str):
+    def __init__(self, measurements: dict, devices: dict, areas: dict):
         """
         The class Positioning provides a methods to retrieve the 2-Dimensional position from measurements taken from
         zenith devices, further, give a different areas return the corresponding area for each point.
@@ -17,11 +20,11 @@ class Positioning:
         """
 
         # ============== VALIDATION OF INPUT DATA ==============
-        if (not isinstance(measurements, str)) or (not isinstance(devices, str)) or (not isinstance(areas, str)):
-            raise Exception("Input data are not string!")
+        # if (not isinstance(measurements, str)) or (not isinstance(devices, str)) or (not isinstance(areas, str)):
+        #     raise Exception("Input data are not string!")
 
-        if (not self.__is_json(measurements)) or (not self.__is_json(devices)) or (not self.__is_json(areas)):
-            raise Exception("Input data are not json!")
+        # if (not self.__is_json(measurements)) or (not self.__is_json(devices)) or (not self.__is_json(areas)):
+        #     raise Exception("Input data are not json!")
 
         # add here further valid procedures
         # ============== VALIDATION OF INPUT DATA ==============
@@ -29,18 +32,18 @@ class Positioning:
         # -------------------- measurements --------------------
         # First of all we process the dictionary (taken from function "loads") and we transform it into dataframe,
         # but we need to manage the array inside (next steps).
-        self.__measurements: DataFrame = pd.DataFrame(json.loads(measurements))
+        self.__measurements: DataFrame = pd.DataFrame(measurements)
         self.__measurements.timestamp = pd.to_datetime(self.__measurements.timestamp, format="%Y-%m-%d %H:%M:%S").apply(
             lambda x: x.replace(second=0, microsecond=0))
         # -------------------- measurements --------------------
 
         # -------------------- devices --------------------
-        self.__sniffers: DataFrame = pd.DataFrame(json.loads(devices))
+        self.__sniffers: DataFrame = pd.DataFrame(devices)
         # -------------------- devices --------------------
 
         # -------------------- areas --------------------
-        self.__areas: GeoDataFrame = gpd.GeoDataFrame(json.loads(areas))
-        # Oss the column must be called "geometry"
+        self.__areas: GeoDataFrame = gpd.GeoDataFrame(areas)
+        # we create a polygons, oss the column must be called "geometry"
         self.__areas['geometry'] = self.__areas['location'].apply(lambda x: Polygon(x))
         self.__areas.drop("location", axis=1, inplace=True)
         # we rename the columns just for avoid misunderstanding
@@ -49,7 +52,7 @@ class Positioning:
 
         # Oss. We take the order of the sniffer from the order of device json
         # (This function simply assign a sort of "priority" 0,1,2... )
-        self.__ids_to_order: dict = {values["id"]: order for order, values in enumerate(json.loads(devices))}
+        self.__ids_to_order: dict = {values["id"]: order for order, values in enumerate(devices)}
         # We retrieve a sniffer list (with the same order)
         self.__sniffers_list: list = list(self.__sniffers[["x", "y"]].itertuples(index=False, name=None))
 
@@ -70,13 +73,13 @@ class Positioning:
         """
         result_rows = []  # list of lists used to create a final dataframe
 
-        for _, row in self.__measurements[["id", "devices", "timestamp"]].iterrows():
+        for _, row in self.__measurements[["id", "rssi_device", "timestamp"]].iterrows():
             # we take the index of row (es 1001) and a list of dictionary which represent the sniffers
             index, dicts_list, timestamp = row[0], row[1], row[2]
 
             # We create a list contain the rssi of the sniffer, the order is not always the same, and this is a problem
             # in order to overcome this we need to maintain attach which is the sniffer linked to rssi values
-            rssi_list = [(sub_dict["rssi"], self.__ids_to_order[int(sub_dict["id"])]) for sub_dict in dicts_list]
+            rssi_list = [(sub_dict[1], self.__ids_to_order[int(sub_dict[0])]) for sub_dict in dicts_list]
 
             # why? because now we order the rssi's based on priority define in the init
             right_order_rssi = sorted(rssi_list, key=lambda t: t[1])
@@ -160,10 +163,12 @@ class Positioning:
     @staticmethod
     def return_json(df: DataFrame) -> str:
         df["id"] = df.index
-        return df.to_json(orient="records")
+        return df.to_dict(orient="records")
     
-# source1 , source2 and 3 are json from backend requeste!!!!
-p = Positioning(source1, source2, source3)
-result = p.perform_xy() #  result ---> dataframe 
-result = p.assign_area(df=result) #  result ---> dataframe 
-result  = p.return_json(result) #  result ---> string in json
+
+if __name__ == '__main__':
+    # source1 , source2 and 3 are json from backend requeste!!!!
+    p = Positioning(source1, source2, source3)
+    result = p.perform_xy() #  result ---> dataframe 
+    result = p.assign_area(df=result) #  result ---> dataframe 
+    result  = p.return_json(result) #  result ---> string in json
