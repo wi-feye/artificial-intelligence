@@ -33,7 +33,6 @@ class Positioning:
         # First of all we process the dictionary (taken from function "loads") and we transform it into dataframe,
         # but we need to manage the array inside (next steps).
         self.__measurements: DataFrame = pd.DataFrame(measurements)
-        # casting the timestamp
         self.__measurements.timestamp = pd.to_datetime(self.__measurements.timestamp, format="%Y-%m-%d %H:%M:%S").apply(
             lambda x: x.replace(second=0, microsecond=0))
         # -------------------- measurements --------------------
@@ -48,7 +47,6 @@ class Positioning:
         self.__areas: GeoDataFrame = gpd.GeoDataFrame(areas)
         # we create a polygons, oss the column must be called "geometry"
         self.__areas['geometry'] = self.__areas['location'].apply(lambda x: Polygon(x))
-        # we do not need more the location column
         self.__areas.drop("location", axis=1, inplace=True)
         # we rename the columns just for avoid misunderstanding
         self.__areas = self.__areas.rename(columns={"id": "id_area", "name": "name_area"})
@@ -61,7 +59,6 @@ class Positioning:
         self.__sniffers_list: list = list(self.__sniffers[["x", "y"]].itertuples(index=False, name=None))
 
         # -------------------- parameters --------------------
-        # just parameters which we can modify if occurs
         self.__rss0: int = -54
         self.__n_env: float = 3.6
         # -------------------- parameters --------------------
@@ -78,7 +75,6 @@ class Positioning:
         """
         result_rows = []  # list of lists used to create a final dataframe
 
-        # foreach measurement
         for _, row in self.__measurements[["id", "rssi_device", "timestamp"]].iterrows():
             # we take the index of row (es 1001) and a list of dictionary which represent the sniffers
             index, dicts_list, timestamp = row[0], row[1], row[2]
@@ -92,10 +88,8 @@ class Positioning:
             # We remove the "priority" to obtain only a list of rssi
             right_order_rssi = [couple[0] for couple in right_order_rssi]
 
-            # we use the position function to get the distance
             result_rows.append([index, timestamp] + list(self.__position(right_order_rssi)))
 
-        # finally we transform the list of list into dataframe
         cols = ["id", "timestamp"] + ["x", "y"]  # self.__sniffers["name"].to_list()
 
         result: DataFrame = pd.DataFrame(result_rows, columns=cols).set_index("id")
@@ -165,7 +159,6 @@ class Positioning:
         geo_points.drop(['index_right'], axis=1, inplace=True)
         # oss if the point does not belong to any area, it returns a -1
         geo_points.fillna("-1", inplace=True)
-        # just casting
         geo_points["id_area"] = geo_points["id_area"].astype(int)
         
         return geo_points[["x", "y", "id_area"]]
