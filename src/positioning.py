@@ -74,7 +74,7 @@ def process_data(df_sniffer: pd.DataFrame, i: int) -> pd.DataFrame:
     df_sniffer['timestamp'] = pd.to_datetime(df_sniffer['timestamp'], format="%Y-%m-%d %H:%M:%S").apply(lambda x: x.replace(second=0,microsecond=0))
     subset =['timestamp', 'mac']
 
-    df_sniffer = df_sniffer[['timestamp','mac','rssi']].groupby(as_index=False,by=subset).min()
+    df_sniffer = df_sniffer[['timestamp','mac','rssi']].groupby(as_index=False,by=subset).max()
 
     df_sniffer = df_sniffer.rename(columns={'rssi':'rssi_'+str(i)})
     
