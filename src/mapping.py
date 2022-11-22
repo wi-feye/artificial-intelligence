@@ -103,7 +103,7 @@ def heatmap(rssi_df: pd.DataFrame):
 
     gdf_building = geo_building()
     map_heat = gdf_building.explore(style_kwds={'color':'black','weight':3,'fillColor':'gray','fillOpacity':0.2})
-    # Warning!: heatmap take points as (longitude, latitude) so pass it (y,x)
+    # Warning!: heatmap take points as (latitude, longitude) so pass it (y,x)
     HeatMap(rssi_df[['y', 'x']].values).add_to(map_heat)
 
     map_heat.save('./plot/heatmap.html')
@@ -129,7 +129,7 @@ def heatmap_tt(rssi_df: pd.DataFrame):
     map_heat_tt = gdf_sniffers.explore(m=map_heat_tt, color='red')
 
     # List comprehension to make out list of lists
-    # Warning!: heatmap take points as (longitude, latitude) so pass it (y,x)
+    # Warning!: heatmap take points as (latitude, longitude) so pass it (y,x)
     heat_data = [[[row['y'], row['x']] for _, row in rssi_df[rssi_df['timestamp'] == i].iterrows()] for i in
                 rssi_df["timestamp"].unique()]
 
