@@ -38,12 +38,10 @@ class Positioning:
         # -------------------- measurements --------------------
 
         # -------------------- devices --------------------
-        # Same things
         self.__sniffers: DataFrame = pd.DataFrame(devices)
         # -------------------- devices --------------------
 
         # -------------------- areas --------------------
-        # we create a geo-dataframe from json data
         self.__areas: GeoDataFrame = gpd.GeoDataFrame(areas)
         # we create a polygons, oss the column must be called "geometry"
         self.__areas['geometry'] = self.__areas['location'].apply(lambda x: Polygon(x))
@@ -151,7 +149,6 @@ class Positioning:
         :return:
         """
         geo_points: GeoDataFrame = gpd.GeoDataFrame(df[["x", "y"]])
-        # create a geometry of points
         geo_points['geometry'] = gpd.points_from_xy(geo_points['x'], geo_points['y'])
         # intersect the geometry of point with the geometry of areas in order to indicate if a point 
         # is inside a one specific area.
