@@ -27,8 +27,6 @@ class Positioning:
 
         # Rename columns
         self.__areas = self.__areas.rename(columns={"id": "id_area", "name": "name_area"})
-
-        self.__ids_to_order: dict = {values["id"]: order for order, values in enumerate(devices)}
         
         self.__sniffers_list: list = {device['id']: [device['x'], device['y']] for device in devices}
 
@@ -126,11 +124,3 @@ class Positioning:
     def return_json(df: DataFrame) -> str:
         df["id"] = df.index
         return df.to_dict(orient="records")
-    
-
-if __name__ == '__main__':
-    # source1 , source2 and 3 are json from backend requeste!!!!
-    p = Positioning(source1, source2, source3)
-    result = p.perform_xy() #  result ---> dataframe 
-    result = p.assign_area(df=result) #  result ---> dataframe 
-    result  = p.return_json(result) #  result ---> string in json
