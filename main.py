@@ -9,7 +9,8 @@ WIFEYE_BASEURL_STORAGE = config['WIFEYE_BASEURL_STORAGE']
 CRON_SECONDS = int(config['CRON_SECONDS'])
 
 def main():
-    res = get(f'{WIFEYE_BASEURL_STORAGE}/buildings')
+    BASEDATA = WIFEYE_BASEURL_STORAGE
+    res = get(f'{BASEDATA}/api/details/ai/')
     buildings = res.json()
     position_detections = []
     for building in buildings:
@@ -17,9 +18,13 @@ def main():
         result = p.perform_xy()
         result = p.assign_area(df=result) 
         result  = p.return_json(result)
+        for detection in result:
+            raw = [raw for raw in building['raws'] if raw['id'] == detection['id']][0]
+            detection['id_building'] = raw['id_building']
+            detection['timestamp'] = raw['timestamp']
         position_detections += result
-    res = post(f'{WIFEYE_BASEURL_STORAGE}/create-position-detections', json=position_detections)
-    print(res.status_code)
+    res = post(f'{BASEDATA}/api/ai/create-position-detections/', json=position_detections)
+    print(res.json())
 
 
 if __name__ == '__main__':
