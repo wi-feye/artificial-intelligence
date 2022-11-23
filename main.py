@@ -10,7 +10,9 @@ CRON_SECONDS = int(config['CRON_SECONDS'])
 
 def main():
     BASEDATA = WIFEYE_BASEURL_STORAGE
+    print(BASEDATA)
     res = get(f'{BASEDATA}/api/details/ai/')
+    print(res)
     buildings = res.json()
     position_detections = []
     for building in buildings:
@@ -24,6 +26,7 @@ def main():
             detection['timestamp'] = raw['timestamp']
         position_detections += result
     res = post(f'{BASEDATA}/api/ai/create-position-detections/', json=position_detections)
+    print(res)
     print(res.json())
 
 
