@@ -19,42 +19,18 @@ class Positioning:
         should be formatted in json, throws exception otherwise
         """
 
-        # ============== VALIDATION OF INPUT DATA ==============
-        # if (not isinstance(measurements, str)) or (not isinstance(devices, str)) or (not isinstance(areas, str)):
-        #     raise Exception("Input data are not string!")
+        self.__measurements = measurements
 
-        # if (not self.__is_json(measurements)) or (not self.__is_json(devices)) or (not self.__is_json(areas)):
-        #     raise Exception("Input data are not json!")
-
-        # add here further valid procedures
-        # ============== VALIDATION OF INPUT DATA ==============
-
-        # -------------------- measurements --------------------
-        # First of all we process the dictionary (taken from function "loads") and we transform it into dataframe,
-        # but we need to manage the array inside (next steps).
-        self.__measurements: DataFrame = pd.DataFrame(measurements)
-        self.__measurements.timestamp = pd.to_datetime(self.__measurements.timestamp, format="%Y-%m-%d %H:%M:%S").apply(
-            lambda x: x.replace(second=0, microsecond=0))
-        # -------------------- measurements --------------------
-
-        # -------------------- devices --------------------
-        self.__sniffers: DataFrame = pd.DataFrame(devices)
-        # -------------------- devices --------------------
-
-        # -------------------- areas --------------------
         self.__areas: GeoDataFrame = gpd.GeoDataFrame(areas)
-        # we create a polygons, oss the column must be called "geometry"
         self.__areas['geometry'] = self.__areas['location'].apply(lambda x: Polygon(x))
         self.__areas.drop("location", axis=1, inplace=True)
-        # we rename the columns just for avoid misunderstanding
-        self.__areas = self.__areas.rename(columns={"id": "id_area", "name": "name_area"})
-        # -------------------- areas --------------------
 
-        # Oss. We take the order of the sniffer from the order of device json
-        # (This function simply assign a sort of "priority" 0,1,2... )
+        # Rename columns
+        self.__areas = self.__areas.rename(columns={"id": "id_area", "name": "name_area"})
+
         self.__ids_to_order: dict = {values["id"]: order for order, values in enumerate(devices)}
-        # We retrieve a sniffer list (with the same order)
-        self.__sniffers_list: list = list(self.__sniffers[["x", "y"]].itertuples(index=False, name=None))
+        
+        self.__sniffers_list: list = {device['id']: [device['x'], device['y']] for device in devices}
 
         # -------------------- parameters --------------------
         self.__rss0: int = -54
@@ -71,22 +47,15 @@ class Positioning:
          | 51   | 2022-11-09 17:16:00   | 8.511 | 17.55
         :return:
         """
-        result_rows = []  # list of lists used to create a final dataframe
+        result_rows = [] 
 
-        for _, row in self.__measurements[["id", "rssi_device", "timestamp"]].iterrows():
-            # we take the index of row (es 1001) and a list of dictionary which represent the sniffers
-            index, dicts_list, timestamp = row[0], row[1], row[2]
+        for measurement in self.__measurements:
 
-            # We create a list contain the rssi of the sniffer, the order is not always the same, and this is a problem
-            # in order to overcome this we need to maintain attach which is the sniffer linked to rssi values
-            rssi_list = [(sub_dict["rssi"], self.__ids_to_order[int(sub_dict["id"])]) for sub_dict in dicts_list]
+            index = measurement['id']
+            timestamp = measurement['timestamp']
+            rssi_device = measurement['rssi_device']
 
-            # why? because now we order the rssi's based on priority define in the init
-            right_order_rssi = sorted(rssi_list, key=lambda t: t[1])
-            # We remove the "priority" to obtain only a list of rssi
-            right_order_rssi = [couple[0] for couple in right_order_rssi]
-
-            result_rows.append([index, timestamp] + list(self.__position(right_order_rssi)))
+            result_rows.append([index, timestamp] + list(self.__position(rssi_device)))
 
         cols = ["id", "timestamp"] + ["x", "y"]  # self.__sniffers["name"].to_list()
 
@@ -94,17 +63,10 @@ class Positioning:
 
         return result
 
-    @staticmethod
-    def __is_json(myjson: str) -> bool:
-        try:
-            json.loads(myjson)
-        except ValueError:
-            return False
-        return True
-
     def __position(self, rss_list: list) -> tuple:
         if len(rss_list) >= 3:
-            P = np.array(self.__sniffers_list)
+            xy_matrix = [self.__sniffers_list[rss['id']] for rss in rss_list]
+            P = np.array(xy_matrix)
             temp_A = P[-1] - P
             temp_A = temp_A[0:-1]
             A = 2 * temp_A
@@ -115,7 +77,7 @@ class Positioning:
 
             d = np.empty((0, 1))
             for rss in rss_list:
-                d = np.append(d, [[rss_to_dist(rss, self.__n_env)]], axis=0)
+                d = np.append(d, [[rss_to_dist(rss['rssi'], self.__n_env)]], axis=0)
 
             d_2 = np.power(d, 2)
             temp_d = d_2 - d_2[-1]
