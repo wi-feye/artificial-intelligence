@@ -4,6 +4,7 @@ import numpy as np
 import requests
 import datetime
 from parameters import *
+from building import *
 
 # list zerynth workspaces (default: atzeni workspace, Smart Application project: our workspace)
 def workspaces():
@@ -129,9 +130,11 @@ def position(rss_list: list) -> Tuple[float, float]:
     """
 
     par = Parameter()
+    buildings = Building()
+    sniffers_list = buildings.sniffers_list[par.select_building]
 
     if len(rss_list) >= 3:
-        P = np.array(par.sniffers_list)
+        P = np.array(sniffers_list)
         temp_A = P[-1] - P
         temp_A = temp_A[0:-1] 
         A = 2 * temp_A
