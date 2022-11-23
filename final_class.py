@@ -79,7 +79,7 @@ class Positioning:
 
             # We create a list contain the rssi of the sniffer, the order is not always the same, and this is a problem
             # in order to overcome this we need to maintain attach which is the sniffer linked to rssi values
-            rssi_list = [(sub_dict[1], self.__ids_to_order[int(sub_dict[0])]) for sub_dict in dicts_list]
+            rssi_list = [(sub_dict["rssi"], self.__ids_to_order[int(sub_dict["id"])]) for sub_dict in dicts_list]
 
             # why? because now we order the rssi's based on priority define in the init
             right_order_rssi = sorted(rssi_list, key=lambda t: t[1])
