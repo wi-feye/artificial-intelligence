@@ -12,6 +12,9 @@ def main():
     BASEDATA = WIFEYE_BASEURL_STORAGE
     res = get(f'{BASEDATA}/api/details/ai/')
     buildings = res.json()
+    # import json
+    # with open('./raw_data.json', 'r') as file:
+    #     buildings = json.load(file)
     position_detections = []
     for building in buildings:
         p = Positioning(building['raws'], building['sniffers'], building['areas'])
@@ -26,6 +29,7 @@ def main():
     res = post(f'{BASEDATA}/api/ai/create-position-detections/', json=position_detections)
 
 if __name__ == '__main__':
+    # main()
     schedule.every(CRON_SECONDS).seconds.do(main)
     while 1:
         schedule.run_pending()

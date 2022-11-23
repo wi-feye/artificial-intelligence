@@ -110,12 +110,14 @@ def build_data(df_sniffers: pd.DataFrame, devices_list: list) -> pd.DataFrame:
 
         df_sniffer_new = df_sniffers[df_sniffers['device_id'] == devices_list[i]['id']]
         df_sniffer_new = process_data(df_sniffer_new, i+1)
-        df_sniffer_start = df_sniffer_start.merge(df_sniffer_new, how="inner", on=["timestamp", "mac"])
+        df_sniffer_start = df_sniffer_start.merge(df_sniffer_new, how="outer", on=["timestamp", "mac"])
 
     rssi_df = df_sniffer_start
     if rssi_df.empty:
         raise Exception("Data collected by sniffers are not mergeable: the timestamps of different sniffers do not intersect")
     
+    rssi_df.dropna(thresh=5, inplace=True)
+    rssi_df.fillna(0, inplace=True)
     return rssi_df
 
 
