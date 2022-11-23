@@ -4,6 +4,7 @@ import numpy as np
 import requests
 import datetime
 from parameters import *
+from building import *
 
 # list zerynth workspaces (default: atzeni workspace, Smart Application project: our workspace)
 def workspaces():
@@ -74,7 +75,7 @@ def process_data(df_sniffer: pd.DataFrame, i: int) -> pd.DataFrame:
     df_sniffer['timestamp'] = pd.to_datetime(df_sniffer['timestamp'], format="%Y-%m-%d %H:%M:%S").apply(lambda x: x.replace(second=0,microsecond=0))
     subset =['timestamp', 'mac']
 
-    df_sniffer = df_sniffer[['timestamp','mac','rssi']].groupby(as_index=False,by=subset).min()
+    df_sniffer = df_sniffer[['timestamp','mac','rssi']].groupby(as_index=False,by=subset).max()
 
     df_sniffer = df_sniffer.rename(columns={'rssi':'rssi_'+str(i)})
     
@@ -129,9 +130,11 @@ def position(rss_list: list) -> Tuple[float, float]:
     """
 
     par = Parameter()
+    buildings = Building()
+    sniffers_list = buildings.sniffers_list[par.select_building]
 
     if len(rss_list) >= 3:
-        P = np.array(par.sniffers_list)
+        P = np.array(sniffers_list)
         temp_A = P[-1] - P
         temp_A = temp_A[0:-1] 
         A = 2 * temp_A
