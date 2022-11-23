@@ -27,6 +27,10 @@ def main():
             detection['timestamp'] = raw['timestamp']
         position_detections += result
     res = post(f'{BASEDATA}/api/ai/create-position-detections/', json=position_detections)
+    print(res.json())
+    
+    # print(position_detections)
+
 
 if __name__ == '__main__':
     # main()
