@@ -20,7 +20,7 @@ def jsonShit(buildings: json) -> json:
         p = Positioning(building=building)
         xy_df = p.perform_xy()
         xy_df = p.assign_area(df=xy_df)
-        print(xy_df)
+        # print(xy_df)
         
         result  = fromDfToJson(xy_df)
         for detection in result:
@@ -43,7 +43,7 @@ def main():
         buildings = json.load(file)
     
     json_result = jsonShit(buildings)
-    print(json_result)
+    # print(json_result)
 
 
 if __name__ == '__main__':
