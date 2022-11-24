@@ -31,13 +31,11 @@ class Positioning:
 
     def perform_xy(self) -> pd.DataFrame:
         """
-        This function take the dataframe calculated in the initial phase and return another dataframe
-        where there are for each point the sequent information:
-         id (of the point) ; list of sniffer with their name ; x (x position) y (y position)
-         es :
-         | Id   | timestamp             | x     | y
-         | 51   | 2022-11-09 17:16:00   | 8.511 | 17.55
-        :return:
+        | Id   | timestamp             | x     | y
+        | 51   | 2022-11-09 17:16:00   | 8.511 | 17.55
+
+        Returns:
+            pd.DataFrame: _description_
         """
         result_rows = [] 
 
@@ -56,6 +54,14 @@ class Positioning:
         return result
 
     def __position(self, rss_list: list) -> Tuple[float, float]:
+        """From rssi list to position
+
+        Args:
+            rss_list (list): list of rssi
+
+        Returns:
+            Tuple[float, float]: x, y
+        """
         if len(rss_list) >= 3:
             xy_matrix = [self.__sniffers_list[rss['id']] for rss in rss_list]
             P = np.array(xy_matrix)
