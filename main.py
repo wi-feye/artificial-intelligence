@@ -10,6 +10,12 @@ config = dotenv_values('env_file')
 WIFEYE_BASEURL_STORAGE = config['WIFEYE_BASEURL_STORAGE']
 CRON_SECONDS = int(config['CRON_SECONDS'])
 
+
+def fromDfToJson(df: pd.DataFrame) -> json:
+    df["id"] = df.index
+    return df.to_dict(orient="records")
+
+
 def main():
     BASEDATA = WIFEYE_BASEURL_STORAGE
     res = get(f'{BASEDATA}/api/details/ai/')
