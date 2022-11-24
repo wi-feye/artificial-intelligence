@@ -1,185 +1,126 @@
+import json
 from typing import Tuple
 import pandas as pd
+from pandas import DataFrame
 import numpy as np
-import requests
-import datetime
-from parameters import *
+from geopandas import GeoDataFrame
+from shapely.geometry import Polygon
+import geopandas as gpd
 
-# list zerynth workspaces (default: atzeni workspace, Smart Application project: our workspace)
-def workspaces():
-    req = requests.get(f'https://api.zdm.zerynth.com/v3/workspaces', headers=HEADERS)
-    return req.json()['workspaces']
+class Positioning:
+    def __init__(self, building: json):
+        """_summary_
 
+        Args:
+            building (json): _description_
+        """
 
-# list of devices of selected workspace
-def devices(workspace_id=WORKSPACE):
+        self.__measurements = building['raws']
 
-    req = requests.get(f'https://api.zdm.zerynth.com/v3/workspaces/{workspace_id}/devices', headers=HEADERS)
-    return req.json()['devices']
+        self.__areas: GeoDataFrame = gpd.GeoDataFrame(building['areas'])
+        self.__areas['geometry'] = self.__areas['location'].apply(lambda x: Polygon(x))
+        self.__areas.drop("location", axis=1, inplace=True)
+        self.__areas = self.__areas.rename(columns={"id": "id_area", "name": "name_area"}) # Rename columns
+        
+        self.__sniffers_list: list = {device['id']: [device['x'], device['y']] for device in building['sniffers']}
 
+        # -------------------- parameters --------------------
+        self.__rss0: int = -54
+        self.__n_env: float = 3.6
+        # -------------------- parameters --------------------
 
-# list timeseries of all devices related to a workspace
-def timeseries(_start:datetime.datetime, _end:datetime.datetime = None, workspace_id=WORKSPACE, _size=500, _from=1) -> pd.DataFrame:
-    """Return dataframe of probe request gathered by Zerynth
+    def perform_xy(self) -> pd.DataFrame:
+        """
+        | Id   | timestamp             | x     | y
+        | 51   | 2022-11-09 17:16:00   | 8.511 | 17.55
 
-    Args:
-        _start (datetime.datetime): datetime (timestamp) from which to start 
-        _end (datetime.datetime, optional): last datetime (timestamp) for wich take probe request. Defaults to None.
-        workspace_id (_type_, optional): workspace. Defaults to WORKSPACE.
-        _size (int, optional): number of probe request to take. Defaults to 500.
-        _from (int, optional): record from wich to start to take probe request. Defaults to 1.
+        Returns:
+            pd.DataFrame: _description_
+        """
+        result_rows = [] 
 
-    Returns:
-        pd.DataFrame: dataframe with probe request
-    """
+        for measurement in self.__measurements:
 
-    _start = _start.isoformat()+"Z"
-    if(_end is None):
-        req = requests.get(f'https://api.storage.zerynth.com/v3/timeseries/{workspace_id}/data?from={_from}&size={_size}&start={_start}', headers=HEADERS)
-    else:
-        _end = _end.isoformat()+"Z"
-        req = requests.get(f'https://api.storage.zerynth.com/v3/timeseries/{workspace_id}/data?from={_from}&size={_size}&start={_start}&end={_end}', headers=HEADERS)
-    res = req.json()['result']
+            index = measurement['id']
+            timestamp = measurement['timestamp']
+            rssi_device = measurement['rssi_device']
 
-    data = {
-        'device_id': [], 
-        'timestamp': [], 
-        'mac': [], 
-        'rssi': []
-    }
-    for fp in res:
-        for scan in fp['payload']['scans']:
-            data['device_id'].append(fp['device_id'])
-            data['timestamp'].append(fp['timestamp_device'])
-            data['mac'].append(scan[3])
-            data['rssi'].append(scan[4])
+            result_rows.append([index, timestamp] + list(self.__position(rssi_device)))
 
-    return pd.DataFrame.from_dict(data)
+        cols = ["id", "timestamp"] + ["x", "y"]
 
+        result: DataFrame = pd.DataFrame(result_rows, columns=cols).set_index("id")
 
-def process_data(df_sniffer: pd.DataFrame, i: int) -> pd.DataFrame:
-    """Pre-process data for each sniffer 
+        return result
 
-    Args:
-        df_sniffer (pd.DataFrame): dataframe of records of a particular sniffer
-        i (int): index of sniffer
+    def __position(self, rss_list: list) -> Tuple[float, float]:
+        """From rssi list to position
 
-    Returns:
-        pd.DataFrame: dataframe of the sniffer processed 
-    """
-    
-    df_sniffer.reset_index(inplace=True)
-    df_sniffer = df_sniffer[['timestamp', 'mac', 'rssi']]
+        Args:
+            rss_list (list): list of rssi
 
-    df_sniffer['timestamp'] = pd.to_datetime(df_sniffer['timestamp'], format="%Y-%m-%d %H:%M:%S").apply(lambda x: x.replace(second=0,microsecond=0))
-    subset =['timestamp', 'mac']
+        Returns:
+            Tuple[float, float]: x, y
+        """
+        if len(rss_list) >= 3:
+            xy_matrix = [self.__sniffers_list[rss['id']] for rss in rss_list]
+            P = np.array(xy_matrix)
+            temp_A = P[-1] - P
+            temp_A = temp_A[0:-1]
+            A = 2 * temp_A
 
-    df_sniffer = df_sniffer[['timestamp','mac','rssi']].groupby(as_index=False,by=subset).min()
+            # from rssi to distance in meters
+            def rss_to_dist(rss: int, nu_env: float) -> float:
+                return np.power(10, (self.__rss0 - rss) / (10 * nu_env))
 
-    df_sniffer = df_sniffer.rename(columns={'rssi':'rssi_'+str(i)})
-    
-    return df_sniffer
+            d = np.empty((0, 1))
+            for rss in rss_list:
+                d = np.append(d, [[rss_to_dist(rss['rssi'], self.__n_env)]], axis=0)
 
+            d_2 = np.power(d, 2)
+            temp_d = d_2 - d_2[-1]
+            temp_d = temp_d[0:-1]
 
-def build_data(df_sniffers: pd.DataFrame, devices_list: list) -> pd.DataFrame: 
-    """Take data colected by all the sniffer, create a dataframe for each sniffer, pre-process them and merge them
-    in a single dataframe with all rssi signals for each probe request
+            P_2 = np.power(P, 2)
+            temp_b1 = P_2[-1] - P_2
+            temp_b1 = temp_b1[0:-1]
 
-    Args:
-        df_sniffers (pd.DataFrame): dataframe of data collected by sniffers
-        devices_list (list): list of sniffer devices
+            b = np.einsum('ij->i', temp_b1).reshape(temp_d.shape) + temp_d
 
-    Raises:
-        Exception: the timestamps of different sniffers do not intersect
+            X = np.dot(np.linalg.pinv(A), b)
 
-    Returns:
-        pd.DataFrame: dataframe with all rssi signals for each probe request
-    """
+            x, y = X[0][0], X[1][0]
+        else:
+            max = float("-inf")
+            for rss in rss_list:
+                if rss['rssi'] > max:
+                    max = rss['rssi']
+                    sniffer_index_max = rss['id']
+            # sniffer_index_max = np.argmax(rss_list)
+            x = self.__sniffers_list[sniffer_index_max][0]
+            y = self.__sniffers_list[sniffer_index_max][1]
 
-    not_empty_sniffers = []
-    for i in range(len(devices_list)):
-        df_sniffer = df_sniffers[df_sniffers['device_id'] == devices_list[i]['id']]
-        if not df_sniffer.empty:
-            not_empty_sniffers.append(i)
+        return x, y
 
-    df_sniffer_start = df_sniffers[df_sniffers['device_id'] == devices_list[not_empty_sniffers[0]]['id']]
-    df_sniffer_start = process_data(df_sniffer_start, not_empty_sniffers[0] + 1)
+    def assign_area(self, df: pd.DataFrame) -> pd.DataFrame:
+        """        
+        | Id | x       | y     | id_area
+        | 51 | 8.511   | 17.55 | 105
 
-    for i in not_empty_sniffers[1:]:
+        Args:
+            df (pd.DataFrame): _description_
 
-        df_sniffer_new = df_sniffers[df_sniffers['device_id'] == devices_list[i]['id']]
-        df_sniffer_new = process_data(df_sniffer_new, i+1)
-        df_sniffer_start = df_sniffer_start.merge(df_sniffer_new, how="inner", on=["timestamp", "mac"])
-
-    rssi_df = df_sniffer_start
-    if rssi_df.empty:
-        raise Exception("Data collected by sniffers are not mergeable: the timestamps of different sniffers do not intersect")
-    
-    return rssi_df
-
-
-def position(rss_list: list) -> Tuple[float, float]:
-    """Compute the position (x, y) of a device given the rssi signals, one from each sniffer
-
-    Args:
-        rss_list (list): list of rssi signals, one from each sniffer
-
-    Returns:
-        Tuple[float, float]: position (x,y) of the device
-    """
-
-    par = Parameter()
-
-    if len(rss_list) >= 3:
-        P = np.array(par.sniffers_list)
-        temp_A = P[-1] - P
-        temp_A = temp_A[0:-1] 
-        A = 2 * temp_A
-
-        # from rssi to distance in meters
-        rss_to_dist = lambda rss, n_env: np.power(10, (par.rss0 -rss) / (10 * n_env)) 
-
-        d = np.empty((0,1))
-        for rss in rss_list:
-            d = np.append(d, [[rss_to_dist(rss, par.n_env)]], axis=0)
-
-        d_2 = np.power(d,2)
-        temp_d = d_2 - d_2[-1]
-        temp_d = temp_d[0:-1]
-
-        P_2 = np.power(P,2)
-        temp_b1 = P_2[-1] - P_2
-        temp_b1 = temp_b1[0:-1]
-
-        b = np.einsum('ij->i', temp_b1).reshape(temp_d.shape) + temp_d
-
-        X = np.dot(np.linalg.pinv(A), b)
-
-        x = X[0][0]
-        y = X[1][0]
-    else:
-        sniffer_index_max = np.argmax(rss_list)
-        x = par.sniffers_list[sniffer_index_max][0]
-        y = par.sniffers_list[sniffer_index_max][1]
-
-    return x, y
-
-
-def pipeline() -> pd.DataFrame:
-    """Function that take data from Zerynth, split for each sniffer, pre-process them and merge to compute
-    the dataframe with rssi signals and the position (x,y) for each probe request
-
-    Returns:
-        pd.DataFrame: dataframe with all rssi signals for each probe request and the coordinates x and y
-    """
-
-    par = Parameter()
-    
-    df_sniffers = timeseries(_start= par.start_time, _size=par.size, _from=par.start)
-    devices_list = devices()
-    
-    rssi_df = build_data(df_sniffers, devices_list)
-    rssi_col = [col for col in rssi_df.columns if col.startswith('rssi')]
-    rssi_df[['x','y']] = pd.DataFrame(rssi_df[rssi_col].apply(lambda x: position(x), axis=1).tolist(), index=rssi_df.index)
-    
-    return rssi_df
+        Returns:
+            pd.DataFrame: _description_
+        """
+        geo_points: GeoDataFrame = gpd.GeoDataFrame(df[["x", "y"]])
+        geo_points['geometry'] = gpd.points_from_xy(geo_points['x'], geo_points['y'])
+        
+        # Compute the area of each points
+        geo_points = geo_points.sjoin(self.__areas, how="left")
+        geo_points.drop(['index_right'], axis=1, inplace=True)
+        geo_points.fillna("-1", inplace=True) # -1 if point is outside the building
+        
+        geo_points["id_area"] = geo_points["id_area"].astype(int)
+        
+        return geo_points[["x", "y", "id_area"]]

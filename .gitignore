@@ -168,3 +168,9 @@ nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea 
 folder.
 #.idea/
+
+
+mock_server
+**node_modules
+**package-lock.json
+smartenv/

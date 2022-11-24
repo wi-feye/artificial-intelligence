@@ -42,7 +42,8 @@ def activeness_index(df, start=None, stop=None):
     show the activeness index in a given period of time, from start to stop
     """
     interested_df = time_interval(df, start, stop)
-    print(len(interested_df.index))
+    tot = len(interested_df.index)
+    return tot
     
 
 def generate_time_every(df, freq="2H", times=5, when=None):
@@ -111,3 +112,6 @@ def send_to_DB(df, chunk_size=1000):
         json_form = chunk.to_json()
         # todo
         # ask the API to send to DB
+
+def convert_json_to_df(json_file):
+    pd.read_json(json_file)
