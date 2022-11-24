@@ -173,3 +173,4 @@ folder.
 mock_server
 **node_modules
 **package-lock.json
+smartenv/
