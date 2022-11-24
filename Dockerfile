@@ -21,4 +21,4 @@ EXPOSE 10003/tcp
 
 # main command
 # CMD ["python3", "-m", "flask", "--app", "src", "run", "-p", "10001", "--host=0.0.0.0"]
-CMD ["gunicorn", "--config", "gunicorn.conf.py", "wsgi:app"]
+CMD ["python3", "main.py"]

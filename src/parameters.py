@@ -19,7 +19,7 @@ class Parameter:
         # environment constant in range [2,4] 2 pochi ostacoli (aumenta sparsità), 4 molti ostacoli (diminuisce sparsità)
         self.n_env = 3
         # y-m-d
-        self.start_time = datetime.datetime(2022, 11, 21)
+        self.start_time = datetime.datetime(2022, 11, 9)
         
         self.end_time = None
 
