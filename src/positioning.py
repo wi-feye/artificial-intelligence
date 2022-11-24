@@ -91,7 +91,12 @@ class Positioning:
 
             x, y = X[0][0], X[1][0]
         else:
-            sniffer_index_max = np.argmax(rss_list)
+            max = float("-inf")
+            for rss in rss_list:
+                if rss['rssi'] > max:
+                    max = rss['rssi']
+                    sniffer_index_max = rss['id']
+            # sniffer_index_max = np.argmax(rss_list)
             x = self.__sniffers_list[sniffer_index_max][0]
             y = self.__sniffers_list[sniffer_index_max][1]
 
