@@ -49,11 +49,14 @@ def timeseries(_start:datetime.datetime, _end:datetime.datetime = None, workspac
         'rssi': []
     }
     for fp in res:
-        for scan in fp['payload']['scans']:
-            data['device_id'].append(fp['device_id'])
-            data['timestamp'].append(fp['timestamp_device'])
-            data['mac'].append(scan[3])
-            data['rssi'].append(scan[4])
+        #print(fp.keys())
+        if 'scans' in fp.keys():
+            for scan in fp['payload']['scans']:
+                
+                data['device_id'].append(fp['device_id'])
+                data['timestamp'].append(fp['timestamp_device'])
+                data['mac'].append(scan[3])
+                data['rssi'].append(scan[4])
 
     return pd.DataFrame.from_dict(data)
 
@@ -73,6 +76,7 @@ def process_data(df_sniffer: pd.DataFrame, i: int) -> pd.DataFrame:
     df_sniffer = df_sniffer[['timestamp', 'mac', 'rssi']]
 
     df_sniffer['timestamp'] = pd.to_datetime(df_sniffer['timestamp'], format="%Y-%m-%d %H:%M:%S").apply(lambda x: x.replace(second=0,microsecond=0))
+    # df_sniffer['timestamp'] = pd.to_datetime(df_sniffer['timestamp'], format="%Y-%m-%d %H:%M:%S").dt.round('min')
     subset =['timestamp', 'mac']
 
     df_sniffer = df_sniffer[['timestamp','mac','rssi']].groupby(as_index=False,by=subset).max()
@@ -134,9 +138,13 @@ def position(rss_list: list) -> Tuple[float, float]:
     par = Parameter()
     buildings = Building()
     sniffers_list = buildings.sniffers_list[par.select_building]
+    
+    #mask = sniffers_list < 0
+    #sniffers_list = sniffers_list(mask)
 
     if len(rss_list) >= 3:
         P = np.array(sniffers_list)
+        #P = P(mask)
         temp_A = P[-1] - P
         temp_A = temp_A[0:-1] 
         A = 2 * temp_A
