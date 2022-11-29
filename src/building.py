@@ -1,6 +1,6 @@
 class Building:
     def __init__(self):
-        # list of vertices' positions for each room in meters ((0,0) is the point of reference)
+        # 0: X rooms, 1: Fibonacci
         self.name = ['X rooms', 'Fibonacci']
 
         # sniffers' positions in meters ((0,0) is the point of reference)

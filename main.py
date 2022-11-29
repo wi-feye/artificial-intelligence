@@ -5,6 +5,8 @@ from src.positioning import Positioning
 import schedule
 from time import sleep
 import pandas as pd
+from src.mapping import *
+from src.prediction import *
 
 config = dotenv_values('env_file')
 WIFEYE_BASEURL_STORAGE = config['WIFEYE_BASEURL_STORAGE']
@@ -19,7 +21,7 @@ def jsonShit(buildings: json) -> json:
     for building in buildings:
         p = Positioning(building=building)
         xy_df = p.perform_xy()
-        xy_df = p.assign_area(df=xy_df)
+        xy_df = p.assign_area(df=xy_df)        
         
         result  = fromDfToJson(xy_df)
         for detection in result:
@@ -40,8 +42,18 @@ def main():
     
     with open('./raw_data.json', 'r') as file:
         buildings = json.load(file)
+        
+    for building in buildings:
+        p = Positioning(building=building)
+        xy_df = p.perform_xy()
+        # area_df = p.assign_area(df=xy_df)
+        # print(xy_df)
+        xy_df, _ = all_is_likelihood(xy_df,threshold=-2.5)
+        print(xy_df)
+        
+        heatmap_tt(xy_df)
     
-    json_result = jsonShit(buildings)
+    #json_result = jsonShit(buildings)
     # print(json_result)
 
 

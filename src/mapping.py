@@ -6,10 +6,9 @@ import geopandas as gpd
 from folium.plugins import HeatMap
 from shapely.geometry import Polygon
 
-from building import Building
-from parameters import Parameter
-from positioning import *
-from utils import *
+from src.building import Building
+from src.parameters import Parameter
+from src.utils import *
 
 
 def geo_building() -> gpd.GeoDataFrame:
@@ -100,7 +99,7 @@ def heatmap(xy_df: pd.DataFrame):
     Returns:
         json: static heatmap of MACs with building
     """
-
+    print(type(xy_df))
     gdf_building = geo_building()
     map_heat = gdf_building.explore(style_kwds={'color':'black','weight':3,'fillColor':'gray','fillOpacity':0.2})
     # Warning!: heatmap take points as (latitude, longitude) so pass it (y,x)
