@@ -8,7 +8,7 @@ from shapely.geometry import Polygon
 import geopandas as gpd
 
 class Positioning:
-    def __init__(self, building: json):
+    def __init__(self, building: json, rss0: int = -54, n_env: float = 3.6):
         """_summary_
 
         Args:
@@ -25,8 +25,8 @@ class Positioning:
         self.__sniffers_list: list = {device['id']: [device['x'], device['y']] for device in building['sniffers']}
 
         # -------------------- parameters --------------------
-        self.__rss0: int = -54
-        self.__n_env: float = 3.6
+        self.__rss0: int = rss0
+        self.__n_env: float = n_env
         # -------------------- parameters --------------------
 
     def perform_xy(self) -> pd.DataFrame:

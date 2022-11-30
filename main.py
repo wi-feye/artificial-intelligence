@@ -9,6 +9,8 @@ import pandas as pd
 config = dotenv_values('env_file')
 WIFEYE_BASEURL_STORAGE = config['WIFEYE_BASEURL_STORAGE']
 CRON_SECONDS = int(config['CRON_SECONDS'])
+RSS0 = int(config['RSS0'])
+N_ENV = float(config['N_ENV'])
 
 
 def fromDfToJson(df: pd.DataFrame) -> json:
@@ -26,7 +28,7 @@ def main():
         #     buildings = json.load(file)
         position_detections = []
         for building in buildings:
-            p = Positioning(building=building)
+            p = Positioning(building=building, rss0=RSS0, n_env=N_ENV)
             xy_df = p.perform_xy()
             xy_df = p.assign_area(df=xy_df)
             # print(xy_df)
