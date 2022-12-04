@@ -41,19 +41,24 @@ def main():
     # buildings = res.json()
     
     with open('./raw_data.json', 'r') as file:
-        buildings = json.load(file)
+        buildings_json = json.load(file)
         
-    #json_result = jsonShit(buildings)
-    # print(json_result)
-        
-    for building in buildings:
-        p = Positioning(building=building)
+    for building in buildings_json:
+        p = Positioning(building_raw=building)
         xy_df = p.perform_xy()
         # area_df = p.assign_area(df=xy_df)
-        # print(xy_df)
-        xy_df, _ = all_is_likelihood(xy_df,threshold=-2.5)
-        print(xy_df)       
-        heatmap_tt(xy_df)
+        print(xy_df)
+        
+    with open('./position_detections.json', 'r') as file:
+        positions_json = json.load(file)
+    
+    for building in positions_json:
+        pred = Prediction(building)
+        poi_df = pred.poi(top=5)
+        print(poi_df)
+    
+    #json_result = jsonShit(buildings)
+    # print(json_result)
 
 
 if __name__ == '__main__':
