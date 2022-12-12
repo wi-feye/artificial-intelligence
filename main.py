@@ -46,8 +46,9 @@ def main():
     for building in buildings_json:
         p = Positioning(building_raw=building)
         xy_df = p.perform_xy()
-        # area_df = p.assign_area(df=xy_df)
+        area_df = p.assign_area(df=xy_df)
         print(xy_df)
+        print(area_df)
         
     with open('./position_detections.json', 'r') as file:
         positions_json = json.load(file)

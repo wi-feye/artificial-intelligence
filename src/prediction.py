@@ -35,5 +35,6 @@ class Prediction:
             poi_df = poi_df.nlargest(top,'likelihood')
         else:
             poi_df = poi_df.sort_values('likelihood', ascending=False)
+        poi_df[['x', 'y', 'likelihood']] = poi_df[['x', 'y', 'likelihood']].round(2) 
         
         return poi_df

@@ -122,7 +122,7 @@ class Positioning:
         # Compute the area of each points
         geo_points = geo_points.sjoin(self.__areas, how="left")
         geo_points.drop(['index_right'], axis=1, inplace=True)
-        geo_points.fillna("-1", inplace=True) # -1 if point is outside the building
+        geo_points.dropna(inplace=True) # drop point if point is outside the building
         
         geo_points["id_area"] = geo_points["id_area"].astype(int)
         
