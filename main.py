@@ -11,55 +11,49 @@ from src.prediction import *
 config = dotenv_values('env_file')
 WIFEYE_BASEURL_STORAGE = config['WIFEYE_BASEURL_STORAGE']
 CRON_SECONDS = int(config['CRON_SECONDS'])
+BASEDATA = WIFEYE_BASEURL_STORAGE
 
-def fromDfToJson(df: pd.DataFrame) -> json:
-    df["id"] = df.index
-    return df.to_dict(orient="records")
-
-def jsonShit(buildings: json) -> json:
+def position_detections() -> json:
+    res = get(f'{BASEDATA}/api/details/ai/')
+    buildings = res.json()
     position_detections = []
     for building in buildings:
-        p = Positioning(building=building)
+        p = Positioning(building_raw=building)
         xy_df = p.perform_xy()
         xy_df = p.assign_area(df=xy_df)        
         
-        result  = fromDfToJson(xy_df)
+        xy_df["id"] = xy_df.index
+        result = xy_df.to_dict(orient="records")
         for detection in result:
             raw = [raw for raw in building['raws'] if raw['id'] == detection['id']][0]
             detection['id_building'] = raw['id_building']
             detection['timestamp'] = raw['timestamp']
         position_detections += result
         
-    res = position_detections
-    # res = post(f'{BASEDATA}/api/ai/create-position-detections/', json=position_detections)
-    # print(res.json())               
-    return res
+    res = post(f'{BASEDATA}/api/ai/create-position-detections/', json=position_detections)
+    print(res.json())
 
-def main():
-    # BASEDATA = WIFEYE_BASEURL_STORAGE
-    # res = get(f'{BASEDATA}/api/details/ai/')
-    # buildings = res.json()
+def find_poi():
+
+    res = get(f'{BASEDATA}/api/details/ai/positions')
+    buildings = res.json()
     
-    with open('./raw_data.json', 'r') as file:
-        buildings_json = json.load(file)
-        
-    for building in buildings_json:
-        p = Positioning(building_raw=building)
-        xy_df = p.perform_xy()
-        area_df = p.assign_area(df=xy_df)
-        print(xy_df)
-        print(area_df)
-        
-    with open('./position_detections.json', 'r') as file:
-        positions_json = json.load(file)
-    
-    for building in positions_json:
+    building_poi = []
+    for building in buildings:
         pred = Prediction(building)
         poi_df = pred.poi(top=5)
-        print(poi_df)
+        building_poi.append({
+            "id": building["id"],
+            "pois": poi_df.to_dict(orient='records')
+        })
+
+    print(building_poi)
+
+def main():
+    position_detections()
+    find_poi()
+        
     
-    #json_result = jsonShit(buildings)
-    # print(json_result)
 
 
 if __name__ == '__main__':
