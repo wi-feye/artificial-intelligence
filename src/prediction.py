@@ -5,7 +5,7 @@ from sklearn.neighbors import KernelDensity
 
 class Prediction:
     def __init__(self, building_position: dict) -> None:
-        self.__xy_df: pd.DataFrame = pd.DataFrame(building_position['position_detections'])
+        self.__xy_df: pd.DataFrame = pd.DataFrame(building_position)
 
 
     def poi(self, bandwith: float = 0.2, top: int = 5, buffer: float = 10) -> pd.DataFrame:

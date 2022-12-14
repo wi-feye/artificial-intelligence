@@ -20,5 +20,4 @@ RUN ["pip3", "install", "-r", "requirements.txt"]
 EXPOSE 10003/tcp
 
 # main command
-# CMD ["python3", "-m", "flask", "--app", "src", "run", "-p", "10001", "--host=0.0.0.0"]
-CMD ["python3", "main.py"]
+CMD python3 cron.py & gunicorn --config gunicorn.conf.py wsgi:app

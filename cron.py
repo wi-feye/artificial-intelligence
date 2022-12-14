@@ -1,4 +1,3 @@
-import json
 from requests import get, post
 from dotenv import dotenv_values
 from src.positioning import Positioning
@@ -13,7 +12,7 @@ WIFEYE_BASEURL_STORAGE = config['WIFEYE_BASEURL_STORAGE']
 CRON_SECONDS = int(config['CRON_SECONDS'])
 BASEDATA = WIFEYE_BASEURL_STORAGE
 
-def position_detections() -> json:
+def position_detections():
     res = get(f'{BASEDATA}/api/details/ai/')
     buildings = res.json()
     position_detections = []
@@ -33,32 +32,9 @@ def position_detections() -> json:
     res = post(f'{BASEDATA}/api/ai/create-position-detections/', json=position_detections)
     print(res.json())
 
-def find_poi():
-
-    res = get(f'{BASEDATA}/api/details/ai/positions')
-    buildings = res.json()
-    
-    building_poi = []
-    for building in buildings:
-        pred = Prediction(building)
-        poi_df = pred.poi(top=5)
-        building_poi.append({
-            "id": building["id"],
-            "pois": poi_df.to_dict(orient='records')
-        })
-
-    print(building_poi)
-
-def main():
-    position_detections()
-    find_poi()
-        
-    
-
 
 if __name__ == '__main__':
-    main()
-    # schedule.every(CRON_SECONDS).seconds.do(main)
-    # while 1:
-    #     schedule.run_pending()
-    #     sleep(1)
+    schedule.every(CRON_SECONDS).seconds.do(position_detections)
+    while 1:
+        schedule.run_pending()
+        sleep(1)
