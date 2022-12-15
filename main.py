@@ -7,6 +7,7 @@ from time import sleep
 import pandas as pd
 from src.mapping import *
 from src.prediction import *
+from src.estimator import Estimator
 
 config = dotenv_values('env_file')
 WIFEYE_BASEURL_STORAGE = config['WIFEYE_BASEURL_STORAGE']
@@ -49,14 +50,19 @@ def main():
         area_df = p.assign_area(df=xy_df)
         print(xy_df)
         print(area_df)
+        estimator = Estimator()
+        estimator.set_train(area_df)
+        estimator.fit()
         
-    with open('./position_detections.json', 'r') as file:
-        positions_json = json.load(file)
-    
-    for building in positions_json:
-        pred = Prediction(building)
-        poi_df = pred.poi(top=5)
-        print(poi_df)
+    df = pd.read_json('./position_detections.json')
+    for i in range(len(df.index)):
+        pd_df = pd.DataFrame(df["position_detections"].iloc[i])
+        estimator = Estimator()
+        estimator.set_train(area_df)
+    # for building in positions_json:
+        # pred = Prediction(building)
+        # poi_df = pred.poi(top=5)
+        # print(poi_df)
     
     #json_result = jsonShit(buildings)
     # print(json_result)
