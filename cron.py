@@ -10,7 +10,8 @@ from src.estimator import Estimator
 
 config = dotenv_values('env_file')
 WIFEYE_BASEURL_STORAGE = config['WIFEYE_BASEURL_STORAGE']
-CRON_SECONDS = int(config['CRON_SECONDS'])
+POSITIONS_CRON_SECONDS = int(config['POSITIONS_CRON_SECONDS'])
+TRAINING_CRON_HOURS = int(config['TRAINING_CRON_HOURS'])
 BASEDATA = WIFEYE_BASEURL_STORAGE
 
 
@@ -45,16 +46,10 @@ def training_model():
         estimator = Estimator()
         estimator.set_train(pd_df)
         estimator.fit()
-
-
-def main():
-    position_detections()
-    # TODO training
-    training_model()
-
-
+    
 if __name__ == '__main__':
-    schedule.every(CRON_SECONDS).seconds.do(main)
+    schedule.every(POSITIONS_CRON_SECONDS).seconds.do(position_detections)
+    schedule.every(TRAINING_CRON_HOURS).hours.do(training_model)
     while 1:
         schedule.run_pending()
         sleep(1)
