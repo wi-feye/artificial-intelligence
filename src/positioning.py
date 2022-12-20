@@ -116,7 +116,7 @@ class Positioning:
         Returns:
             pd.DataFrame: _description_
         """
-        geo_points: GeoDataFrame = gpd.GeoDataFrame(df[["x", "y"]])
+        geo_points: GeoDataFrame = gpd.GeoDataFrame(df[["x", "y", "timestamp"]])
         geo_points['geometry'] = gpd.points_from_xy(geo_points['x'], geo_points['y'])
         
         # Compute the area of each points
@@ -126,4 +126,4 @@ class Positioning:
         
         geo_points["id_area"] = geo_points["id_area"].astype(int)
         
-        return geo_points[["x", "y", "id_area"]]
+        return geo_points[["x", "y", "id_area","timestamp"]]

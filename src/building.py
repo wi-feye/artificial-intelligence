@@ -12,7 +12,8 @@ class Building:
             'usage': ['study room', 'study room', 'hallway'],
             'geometry': [[(-1,-0.5),(5,-0.5),(5,8.3),(-1,8.3)],
                 [(5,-0.5),(9.8,-0.5),(9.8,8.3),(5,8.3)],
-                [(-1,-3),(9.8,-3),(9.8,-0.5),(-1,-0.5)]]},
+                [(-1,-3),(9.8,-3),(9.8,-0.5),(-1,-0.5)]]
+            },
 
             {'space': ['room E', 'room 1A', 'hall', 'hallway'],
             'usage': ['study room', 'study room', 'break', 'hallway'],

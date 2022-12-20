@@ -174,5 +174,6 @@ mock_server
 **node_modules
 **package-lock.json
 smartenv/
+AI_venv/
 position_detections.json
 raw_data.json
