@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,12 +11,20 @@ from keras.models import Sequential
 from keras.layers import Dense, LSTM, Bidirectional, Dropout
 from keras.callbacks import EarlyStopping
 
+pm_vars_path = "./prediction_model_vars.json"
+
 class Estimator:
     def __init__(self):
         
         self.model = None
         self.df = None
         self.window_size = None
+
+        with open(pm_vars_path, "r") as file:
+            vars = json.load(file)
+            self.window_size = vars["window_size"]
+
+        
 
     def split_series(self, dataset, n_past):
         #
@@ -120,10 +129,14 @@ class Estimator:
                     callbacks=cb)
         path="./prediction_model"
         self.model.save(path)
+        with open(pm_vars_path, "w") as file:
+            json.dump({
+                "window_size": self.window_size
+            }, file)
 
 
-    def process_json(self, filename, save_id=True):
-        temp = pd.read_json(filename)
+    def process_json(self, past_file, save_id=True):
+        temp = pd.DataFrame(past_file)
         df = pd.DataFrame(columns=["id", "id_area", "id_building", "timestamp", "x", "y"])
         for i in range(len(temp.index)):
             pd_df = pd.DataFrame(temp["position_detections"].iloc[i])
@@ -154,7 +167,7 @@ class Estimator:
             new_df = pd.concat([new_df, temp_df], axis=1)
 
 
-        new_df.drop(columns=['-1'], inplace=True)
+        # new_df.drop(columns=['-1'], inplace=True)
 
         if save_id:
             # salva anche l'id dell'area
@@ -167,8 +180,8 @@ class Estimator:
             return new_df
 
     def setup(self, filename):
-
-        new_df = self.process_json(filename, save_id=False)
+        content = json.load(open(filename))
+        new_df = self.process_json(content, save_id=False)
 
         self.df = new_df
 
@@ -199,17 +212,19 @@ class Estimator:
 
     
 
-    def predict(self, past_file):
+    def predict(self, past_file, future_steps=5):
         dataset = self.process_json(past_file, save_id = True)
         prediction_dict={}
         for id, timeseries in dataset.items():
             #la timseries deve essere della stessa lunghezza che è stata utilizzata per trainare il modello, quindi prendiamo gli utilimi sliding_window_size step
             timeseries = np.array(timeseries)
             timeseries = timeseries[-self.window_size:]
+
             #adjust dimension in order to pass it to the model
             timeseries = timeseries[np.newaxis, :, np.newaxis]
-            predictions = self.make_predictions(building = id, timeseries=timeseries, future_steps=5)
+            predictions = self.make_predictions(building = id, timeseries=timeseries, future_steps=future_steps)
             prediction_dict[str(id)] = predictions
+
         return prediction_dict
     
     def fit_predict(self):

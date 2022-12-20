@@ -40,7 +40,7 @@ def position_detections():
 
 def training_model():
     res = get(f'{BASEDATA}/api/details/ai/positions/')
-    df = pd.read_json(res)
+    df = pd.DataFrame(res)
     for i in range(len(df.index)):
         pd_df = pd.DataFrame(df["position_detections"].iloc[i])
         estimator = Estimator()
