@@ -50,15 +50,16 @@ def find_poi():
 
     print(building_poi)
 
+
 def main():
     position_detections()
     find_poi()
-    df = pd.read_json('./position_detections.json')
-    for i in range(len(df.index)):
-        pd_df = pd.DataFrame(df["position_detections"].iloc[i])
-        estimator = Estimator()
-        estimator.set_train(pd_df)
-        estimator.fit()
+    # df = pd.read_json('./position_detections.json')
+	# build_dataset_and_fit()
+    estimator = Estimator()
+    estimator.setup('./position_detections.json')
+    estimator.load_model()
+    estimator.predict('./position_detections.json')
     
 
 
