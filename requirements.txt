@@ -8,3 +8,4 @@ python-dotenv==0.21.0
 schedule==1.1.0
 Flask==2.2.2
 tensorflow
+python-dotenv
