@@ -1,6 +1,5 @@
-from positioning import *
-from mapping import *
-from utils import *
+from src.mapping import *
+from src.utils import *
 
 def enrich_points(xy_df: pd.DataFrame) -> gpd.GeoDataFrame:
     """Compute an enriched geodataframe of probe request. For each record (probe request) there is a new feature space

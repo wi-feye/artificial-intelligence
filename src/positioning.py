@@ -8,51 +8,28 @@ from shapely.geometry import Polygon
 import geopandas as gpd
 
 class Positioning:
-    def __init__(self, building: json, rss0: int = -54, n_env: float = 3.6):
+    def __init__(self, building_raw: json, rss0: int = -54, n_env: float = 3.6):
         """_summary_
 
         Args:
-            building (json): _description_
+            building_raw (dict): _description_
         """
 
-        self.__measurements = building['raws']
+        self.__measurements = building_raw['raws']
 
-        self.__areas: GeoDataFrame = gpd.GeoDataFrame(building['areas'])
+        self.__areas: GeoDataFrame = gpd.GeoDataFrame(building_raw['areas'])
         self.__areas['geometry'] = self.__areas['location'].apply(lambda x: Polygon(x))
         self.__areas.drop("location", axis=1, inplace=True)
         self.__areas = self.__areas.rename(columns={"id": "id_area", "name": "name_area"}) # Rename columns
         
-        self.__sniffers_list: list = {device['id']: [device['x'], device['y']] for device in building['sniffers']}
+        self.__sniffers_list: dict = {device['id']: [device['x'], device['y']] for device in building_raw['sniffers']}
 
         # -------------------- parameters --------------------
         self.__rss0: int = rss0
         self.__n_env: float = n_env
         # -------------------- parameters --------------------
-
-    def perform_xy(self) -> pd.DataFrame:
-        """
-        | Id   | timestamp             | x     | y
-        | 51   | 2022-11-09 17:16:00   | 8.511 | 17.55
-
-        Returns:
-            pd.DataFrame: _description_
-        """
-        result_rows = [] 
-
-        for measurement in self.__measurements:
-
-            index = measurement['id']
-            timestamp = measurement['timestamp']
-            rssi_device = measurement['rssi_device']
-
-            result_rows.append([index, timestamp] + list(self.__position(rssi_device)))
-
-        cols = ["id", "timestamp"] + ["x", "y"]
-
-        result: DataFrame = pd.DataFrame(result_rows, columns=cols).set_index("id")
-
-        return result
-
+        
+        
     def __position(self, rss_list: list) -> Tuple[float, float]:
         """From rssi list to position
 
@@ -101,6 +78,33 @@ class Positioning:
             y = self.__sniffers_list[sniffer_index_max][1]
 
         return x, y
+    
+
+    def perform_xy(self) -> pd.DataFrame:
+        """
+        | Id   | timestamp             | x     | y
+        | 51   | 2022-11-09 17:16:00   | 8.511 | 17.55
+
+        Returns:
+            pd.DataFrame: _description_
+        """
+        result_rows = [] 
+
+        for measurement in self.__measurements:
+
+            index = measurement['id']
+            timestamp = measurement['timestamp']
+            rssi_device = measurement['rssi_device']
+
+            result_rows.append([index, timestamp] + list(self.__position(rssi_device)))
+
+        cols = ["id", "timestamp"] + ["x", "y"]
+
+        result: DataFrame = pd.DataFrame(result_rows, columns=cols).set_index("id")
+        result[['x','y']] = result[['x','y']].round(2)
+
+        return result
+
 
     def assign_area(self, df: pd.DataFrame) -> pd.DataFrame:
         """        
@@ -113,14 +117,14 @@ class Positioning:
         Returns:
             pd.DataFrame: _description_
         """
-        geo_points: GeoDataFrame = gpd.GeoDataFrame(df[["x", "y"]])
+        geo_points: GeoDataFrame = gpd.GeoDataFrame(df[["x", "y", "timestamp"]])
         geo_points['geometry'] = gpd.points_from_xy(geo_points['x'], geo_points['y'])
         
         # Compute the area of each points
         geo_points = geo_points.sjoin(self.__areas, how="left")
         geo_points.drop(['index_right'], axis=1, inplace=True)
-        geo_points.fillna("-1", inplace=True) # -1 if point is outside the building
+        geo_points.dropna(inplace=True) # drop point if point is outside the building
         
         geo_points["id_area"] = geo_points["id_area"].astype(int)
         
-        return geo_points[["x", "y", "id_area"]]
+        return geo_points[["x", "y", "id_area","timestamp"]]
