@@ -53,13 +53,19 @@ class Estimator:
 
 
         # length of the smaller timeseries
-        min_len = len(min(dataset, key=len))
-        self.window_size = min_len - 1
+        self.window_size = 18
 
-        data_train, data_test = train_test_split(dataset, test_size=0.1, shuffle=True)
+        data_train, data_test = train_test_split(dataset, test_size=0.1, shuffle=True, random_state=1)
 
         X_train, y_train = self.split_series(data_train, self.window_size)
         X_test, y_test = self.split_series(data_test, self.window_size)
+
+        # remove duplicated timeseries
+        X_train, filtered_index = np.unique(X_train, axis=0, return_index=True)
+        y_train = y_train[filtered_index]
+
+        X_test, filtered_index = np.unique(X_test, axis=0, return_index=True)
+        y_test = y_test[filtered_index]
 
         # adjust shape for lstm model
         X_train = X_train[:, :, np.newaxis]
@@ -146,8 +152,8 @@ class Estimator:
         new_df = pd.DataFrame()
 
         for elem in unique_areas:
-            grouped_df = df.loc[df['id_area'] == int(elem)].groupby(pd.to_datetime(df["timestamp"]).dt.floor(minutes))[
-                "x"].count()
+            grouped_df = df['x'].where(df['id_area'] == int(elem)).groupby(
+                pd.to_datetime(df["timestamp"]).dt.floor(minutes)).count()
             col_name = str(elem)
             temp_df = pd.DataFrame(data=grouped_df.to_list(), columns=[col_name])
 
