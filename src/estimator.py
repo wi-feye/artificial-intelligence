@@ -77,30 +77,23 @@ class Estimator:
     def split(self, X, Y, size = 0.1):
         X = X[:,:, np.newaxis]
         return train_test_split(X, Y, test_size=size)
-    
-    def build_model(self, layers, units, bidirectional=False, dropout=0.2):
-        model = keras.Sequential()
-        if bidirectional:
-            #first layer
-            model.add(Bidirectional(LSTM(units, return_sequences=True, input_shape=[None, 1])))
 
-            # hidden layer
-            for i in range(layers -1):
-                model.add(Bidirectional(LSTM(units, return_sequences=True)))
-                
-            model.add(Bidirectional(LSTM(units)))
-        else:
-            #first layer
-            model.add(LSTM(units, return_sequences=True, input_shape=[None, 1]))
+    def build_model(self, layers, units, dropout=0.2):
+        model = Sequential()
 
-            # hidden layer
-            for i in range(layers -1):
-                model.add(LSTM(units, return_sequences=True))
-            model.add(LSTM(units))
+        # first layer
+        model.add(LSTM(units, return_sequences=True, input_shape=[None, 1]))
+
+        # hidden layer
+        for i in range(layers - 1):
+            model.add(LSTM(units, return_sequences=True))
+
+        # last hidden layer before output layer without the return sequences
+        model.add(LSTM(units))
 
         model.add(Dropout(dropout))
 
-        # output layer
+        # output layer - predict only next timestep
         model.add(Dense(1))
 
         model.compile(loss="mse", optimizer="adam")
@@ -114,12 +107,12 @@ class Estimator:
         cb = [stop_early]
         epochs = 100
         # take best parameters from csv file
-        #row = kfold_cv_df.iloc[0]
-        #units = row["units"]
-        #layers = row["layers"]
-        #bidirectional = row["bidirectional"]
-        #dropout = row["dropout"]
-        self.model = self.build_model(layers=2, units=50, bidirectional=False, dropout=0.1)
+        results = pd.read_csv("./random_search_results.csv")
+        row = results.iloc[0]
+        units = row["units"]
+        layers = row["layers"]
+        dropout = row["dropout"]
+        self.model = self.build_model(layers=layers, units=units, dropout=dropout)
 
         history = self.model.fit(X_train, Y_train, epochs=epochs,
                     validation_split=0.2,
