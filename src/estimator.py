@@ -109,8 +109,8 @@ class Estimator:
         # take best parameters from csv file
         results = pd.read_csv("./random_search_results.csv")
         row = results.iloc[0]
-        units = row["units"]
-        layers = row["layers"]
+        units = int(row["units"])
+        layers = int(row["layers"])
         dropout = row["dropout"]
         self.model = self.build_model(layers=layers, units=units, dropout=dropout)
 
