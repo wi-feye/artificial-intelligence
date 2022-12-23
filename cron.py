@@ -16,10 +16,12 @@ BASEDATA = WIFEYE_BASEURL_STORAGE
 
 
 def position_detections():
+    print("Start ai position_detections...")
     res = get(f'{BASEDATA}/api/details/ai/')
     buildings = res.json()
     position_detections = []
     for building in buildings:
+        print(f"Ai position_detections building {building['id']}")
         p = Positioning(building_raw=building)
         xy_df = p.perform_xy()
         xy_df = p.assign_area(df=xy_df)
@@ -36,18 +38,22 @@ def position_detections():
     res = post(f'{BASEDATA}/api/ai/create-position-detections/',
                json=position_detections)
     print(res.json())
+    print("Stop ai position_detections")
 
 
 def training_model():
+    print("Start ai training model...")
     res = get(f'{BASEDATA}/api/details/ai/positions/')
     df = pd.DataFrame(res)
     for i in range(len(df.index)):
+        print(f"Training model {i} data")
         pd_df = pd.DataFrame(df["position_detections"].iloc[i])
         estimator = Estimator()
         estimator.set_train(pd_df)
         estimator.fit()
     
 if __name__ == '__main__':
+    print("Start ai cron...")
     schedule.every(POSITIONS_CRON_SECONDS).seconds.do(position_detections)
     schedule.every(TRAINING_CRON_HOURS).hours.do(training_model)
     while 1:
