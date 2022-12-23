@@ -38,7 +38,8 @@ def find_poi(building_id):
 
 @app.route("/api/predict/<building_id>")
 def predict(building_id):
-    target_date = datetime.fromisoformat(request.args.get("date"))
+    target_date = request.args.get("date").replace("Z", "")
+    target_date = datetime.fromisoformat(target_date)
     max_date = get(
         f'{BASEDATA}/api/position-detection/maxdate/{building_id}').json()["maxDate"]
     max_date = datetime.fromisoformat(max_date)
