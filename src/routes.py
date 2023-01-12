@@ -7,6 +7,7 @@ from src.mapping import *
 from src.prediction import *
 from flask import Flask, request
 from datetime import datetime, timedelta
+import math
 
 config = dotenv_values('env_file')
 BASEDATA = config['WIFEYE_BASEURL_STORAGE']
@@ -24,13 +25,16 @@ def find_poi(building_id):
     positions = res.json()
     if len(positions) > 0:
         pred = Prediction(positions)
-        poi_df = pred.poi(top=int(k) if k is not None and int(k) > 1 else 5)
+        poi_df = pred.poi(top=(int(k)) if k is not None and int(k) > 1 else 5)
         poi_list = poi_df.to_dict(orient='records')
-        min_l = poi_list[-1]['likelihood']
+        for poi in poi_list:
+            poi['likelihood'] = math.exp(poi['likelihood'])
         max_l = poi_list[0]['likelihood']
         for poi in poi_list:
-            poi['likelihood'] = round(
-                (poi['likelihood'] - min_l) / (max_l - min_l), 4)
+            poi['likelihood'] = round((poi['likelihood'] / max_l), 4)
+        print(poi_list)
+        print([poi['likelihood'] for poi in poi_list])
+        print(max_l)
         return poi_list
     else:
         return []
@@ -47,7 +51,8 @@ def predict(building_id):
     res = get(
         f'{BASEDATA}/api/details/ai/positions/{building_id}?start={min_date.isoformat()}&end={max_date.isoformat()}').json()
     # maximum future_steps are 3 days
-    delta_time = min(int((target_date - max_date).total_seconds() // 600), 6 * 24 * 3)
+    delta_time = min(
+        int((target_date - max_date).total_seconds() // 600), 6 * 24 * 3)
 
     estimator = Estimator()
     estimator.load_model()
