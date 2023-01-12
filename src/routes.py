@@ -32,9 +32,6 @@ def find_poi(building_id):
         max_l = poi_list[0]['likelihood']
         for poi in poi_list:
             poi['likelihood'] = round((poi['likelihood'] / max_l), 4)
-        print(poi_list)
-        print([poi['likelihood'] for poi in poi_list])
-        print(max_l)
         return poi_list
     else:
         return []
